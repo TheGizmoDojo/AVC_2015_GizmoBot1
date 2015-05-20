@@ -1,5 +1,5 @@
-# AVC_2015_TEMP
-<p>Temporary repository for AVC code until TGD's repository is set up.</p>
+# AVC_2015_GizmoBot1
+<p>Repository for AVC code.</p>
 
 <p>This is the codebase for The Gizmo Dojo's 2015 Sparkfun AVC entry. Documentation will be sketchy,
 but the basics should be here.</p>
