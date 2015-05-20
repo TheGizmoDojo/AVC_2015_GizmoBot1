@@ -1,0 +1,87 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<kml xmlns='http://www.opengis.net/kml/2.2'>
+	<Document>
+		<name>Untitled map</name>
+		<description><![CDATA[]]></description>
+		<Folder>
+			<name>Untitled layer</name>
+			<Placemark>
+				<styleUrl>#icon-503-DB4436</styleUrl>
+				<name>Point 1</name>
+				<ExtendedData>
+				</ExtendedData>
+				<Point>
+					<coordinates>-105.1203418,39.9155008,0.0</coordinates>
+				</Point>
+			</Placemark>
+			<Placemark>
+				<styleUrl>#icon-503-DB4436</styleUrl>
+				<name>Point 2</name>
+				<ExtendedData>
+				</ExtendedData>
+				<Point>
+					<coordinates>-105.1204598,39.9156695,0.0</coordinates>
+				</Point>
+			</Placemark>
+			<Placemark>
+				<styleUrl>#icon-503-DB4436</styleUrl>
+				<name>Point 3</name>
+				<ExtendedData>
+				</ExtendedData>
+				<Point>
+					<coordinates>-105.12072530000002,39.9155944,0.0</coordinates>
+				</Point>
+			</Placemark>
+			<Placemark>
+				<styleUrl>#icon-503-DB4436</styleUrl>
+				<name>Point 4</name>
+				<ExtendedData>
+				</ExtendedData>
+				<Point>
+					<coordinates>-105.1209788,39.9155204,0.0</coordinates>
+				</Point>
+			</Placemark>
+			<Placemark>
+				<styleUrl>#icon-503-DB4436</styleUrl>
+				<name>Point 5</name>
+				<ExtendedData>
+				</ExtendedData>
+				<Point>
+					<coordinates>-105.1210941,39.9153939,0.0</coordinates>
+				</Point>
+			</Placemark>
+			<Placemark>
+				<styleUrl>#icon-503-DB4436</styleUrl>
+				<name>Point 6</name>
+				<ExtendedData>
+				</ExtendedData>
+				<Point>
+					<coordinates>-105.121078,39.9153064,0.0</coordinates>
+				</Point>
+			</Placemark>
+			<Placemark>
+				<styleUrl>#icon-503-DB4436</styleUrl>
+				<name>Point 7</name>
+				<ExtendedData>
+				</ExtendedData>
+				<Point>
+					<coordinates>-105.120669,39.9154134,0.0</coordinates>
+				</Point>
+			</Placemark>
+		</Folder>
+		<Folder>
+			<name>Untitled layer</name>
+		</Folder>
+		<Style id='icon-503-DB4436'>
+			<IconStyle>
+				<color>ff3644DB</color>
+				<scale>1.1</scale>
+				<Icon>
+					<href>http://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+				</Icon>
+				<hotSpot x='16' y='31' xunits='pixels' yunits='insetPixels'>
+				</hotSpot>
+			</IconStyle>
+		</Style>
+	</Document>
+</kml>
