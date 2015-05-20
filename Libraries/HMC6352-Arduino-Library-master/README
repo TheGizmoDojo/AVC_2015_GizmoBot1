@@ -1,0 +1,7 @@
+This is an Arduino library for the HMC6352 compass module. 
+
+Pick one up at http://www.sparkfun.com/products/7915
+
+To download. click the DOWNLOADS button in the top right corner, rename the uncompressed folder HMC6352. Check that the HMC6352 folder contains HMC6352.cpp and HMC6352.h
+
+Place the HMC6352 library folder your <arduinosketchfolder>/libraries/ folder. You may need to create the libraries subfolder if its your first library. Restart the IDE.
