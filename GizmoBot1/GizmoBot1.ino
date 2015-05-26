@@ -9,6 +9,25 @@
 #include "TGD_Movement.h" // Set pin assignments in "TGD_Movement.h"
 #include "location.h"
 
+/** init_gps() */
+void init_gps() {
+  Serial.print(F("init_gps() ... "));
+  // 9600 NMEA is the default baud rate for Adafruit MTK GPS's- some use 4800
+  GPS.begin(9600);
+  // uncomment this line to turn on RMC (recommended minimum) and GGA (fix data) including altitude
+  GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
+  // Set the update rate
+  GPS.sendCommand(PMTK_SET_NMEA_UPDATE_5HZ);
+  // Request updates on antenna status, comment out to keep quiet
+  GPS.sendCommand(PGCMD_ANTENNA);
+
+  // start interrupt timer
+  OCR0A = 0xAF;
+  TIMSK0 |= _BV(OCIE0A);
+  
+  Serial.println(F("OK!"));
+}
+
 void setup() {
   // put your setup code here, to run once:
   init_movement();
