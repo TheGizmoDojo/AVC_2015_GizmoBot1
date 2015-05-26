@@ -7,6 +7,7 @@
  */
  
 #include "TGD_Movement.h" // Set pin assignments in "TGD_Movement.h"
+#include "location.h"
 
 void setup() {
   // put your setup code here, to run once:
