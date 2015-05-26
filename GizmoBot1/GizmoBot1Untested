@@ -1,0 +1,244 @@
+/**
+ * Arduiono code for TGD Autonomous Vehicle
+ *
+ * Authors: TGD AVC committee
+ *
+ * License: CC Share/Share-alike
+ */
+ 
+#include "TGD_Movement.h" // Set pin assignments in "TGD_Movement.h"
+#include "location.h"
+
+//NOTE: for this to compile you need to replace the standard SD library with Adafruit_SD, which uses soft SPI and therefore
+  // allows the SPI pins to be changes from the default of 50, 51, 52 on the Mega
+  
+/*
+void setup() {
+  // put your setup code here, to run once:
+  init_movement();
+  
+  
+  void loop_test_motors() {
+  move_forward_stop(1000);     // Move forward for one second and stop.
+  delay(500);                  // Pause for half a second.
+  move_reverse_stop(1000);     // Move backwards for one second and stop.
+  delay(500);                  // Pause for half a second.
+  wheels_left();               // Turn wheels left.
+  move_forward_stop(750);      // Move forward while turning left for 0.75 seconds.
+  delay(500);                  // Pause for half a second.
+  move_reverse_stop(750);      // Move backwards with wheels turned left for 0.75 seconds.
+  delay(500);                  // Pause for half a second.
+  wheels_right();              // Turn wheels right.
+  move_forward_stop(750);      // Move forward while turning right for 0.75 seconds.
+  delay(500);                  // Pause for half a second.
+  move_reverse_stop(750);      // Move backwards with wheels turned right for 0.75 seconds.
+  wheels_center();             // Turn wheels to point straight forward.
+  }
+
+}
+*/
+
+File logger;
+Location currentLocation(0,0);
+Location targetLocation(0,0);
+unsigned short nextWaypointIndex = 0;
+unsigned short waypointCount = sizeof(WAYPOINT) / sizeof(Location);
+
+boolean gpsFix = true;
+
+/** init_gps() */
+void init_gps() {
+  Serial.print(F("init_gps() ... "));
+  // 9600 NMEA is the default baud rate for Adafruit MTK GPS's- some use 4800
+  GPS.begin(9600);
+  // uncomment this line to turn on RMC (recommended minimum) and GGA (fix data) including altitude
+  GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
+  // Set the update rate
+  GPS.sendCommand(PMTK_SET_NMEA_UPDATE_5HZ);
+  // Request updates on antenna status, comment out to keep quiet
+  GPS.sendCommand(PGCMD_ANTENNA);
+
+  // start interrupt timer
+  OCR0A = 0xAF;
+  TIMSK0 |= _BV(OCIE0A);
+  
+  Serial.println(F("OK!"));
+}
+
+void init_compass() {
+  Serial.print(F("init_compass() ... "));
+  Wire.begin();
+  Serial.println(F(" ... OK!"));
+}
+
+void init_sd() {
+  Serial.print(F("init_sd() ... "));
+
+  char filename[] = "TEST.LOG";
+  pinMode(10, OUTPUT);
+  
+  //NOTE: for this to compile you need to replace the standard SD library with Adafruit_SD, which uses soft SPI and therefore
+  // allows the SPI pins to be changes from the default of 50, 51, 52 on the Mega
+  if (!SD.begin(10, 11, 12, 13)) {
+    Serial.println(F("FAILED: Could not initialize SD library!"));
+    return;
+  }
+  
+  logger = SD.open(filename, FILE_WRITE);
+  if (!logger) {
+    Serial.println(F("FAILED: Could not open log file for writing!"));
+    return;
+  }
+  
+  logger.println(F("START"));
+ 
+  Serial.println(F("OK!"));
+}
+
+
+float calculate_compass_bearing(double x, double y) {
+  double ax = x>0 ? x : -x;
+  double ay = y>0 ? y : -y;
+  double radian = 180 / 3.141592;
+  if (x>0) {
+    if (y>0) {
+      // 0 through 90
+      if (ax>ay) {
+        return 90 - radian * atan(ay/ax);
+      }
+      else {
+        return radian * atan(ax/ay);
+      }
+    }
+    else {
+      if (ax>ay) {
+        return 90 + radian * atan(ay/ax);
+      }
+      else {
+        return 180 - radian * atan(ax/ay);
+      }
+    }
+  }
+  else {
+    if (y>0) {
+      if (ax>ay) {
+        return 270 + radian * atan(ay/ax);
+      }
+      else {
+        return 360 - radian * atan(ax/ay);
+      }
+    }
+    else {
+      if (ax>ay) {
+        return 270 - radian * atan(ay/ax);
+      }
+      else {
+        return 180 + radian * atan(ax/ay);
+      }
+    }
+  }
+}
+
+float convert_to_decimal_degrees(float f) {
+  int d = (int) f/100;
+  f -= d*100;
+  return d + (f/60.0);
+}
+
+
+
+
+/** calc difference between two DMS (degrees, minutes, seconds) numbers ... not needed if we use decimal degrees everywhere */
+double calculate_difference(double l1, double l2) {
+
+  int d1 = l1 / 100;
+  int d2 = l2 / 100;
+  double m1 = l1 - (d1 * 100);
+  double m2 = l2 - (d2 * 100);
+  double ret = ((d1*60.0f)+m1) - ((d2*60.0f)+m2);
+
+  return ret;
+   
+}
+
+
+void get_next_waypoint() {
+
+  if (nextWaypointIndex == waypointCount) {
+    //set_motor_speeds(0,0);
+    if (logger) {
+      logger.println(F("COMPLETED_COURSE"));
+    }
+    while (1) {
+      delay(1000);
+    }
+  }
+  
+  targetLocation.latitude  = WAYPOINT[nextWaypointIndex].latitude;
+  targetLocation.longitude = WAYPOINT[nextWaypointIndex].longitude;
+  
+  if (logger) {
+    logger.print(F("WAYPOINT,"));
+    logger.print(nextWaypointIndex);
+    logger.print(",");
+    logger.print(targetLocation.latitude);
+    logger.print(",");
+    logger.println(targetLocation.longitude);
+  }
+  
+  nextWaypointIndex++;
+} 
+
+void loop() {
+
+//  Serial.println(F("loop()"));
+  // put your main code here, to run repeatedly:
+  
+  // check current and destination location.
+  // calculate heading to get from a to b.
+  // compare it to current heading.
+  // check for obstacles.
+  // turn vehicle to correct heading.
+  // check for obstacles.
+  // move forward for 1 second and stop.
+
+  // check for new GPS info 
+  if (GPS.newNMEAreceived()) {
+    if (GPS.parse(GPS.lastNMEA())) {
+      if (GPS.fix) {
+        if (!gpsFix) {
+          gpsFix = true;
+          if (logger) {
+            logger.println(F("GPS_FIX"));
+          }
+        }
+        // update current location
+        currentLocation.latitude = convert_to_decimal_degrees(GPS.latitude);
+        // convert longitude to negative number for WEST
+        currentLocation.longitude = 0 - convert_to_decimal_degrees(GPS.longitude); 
+        
+        // log every GPS update (max 5 times per second)
+        if (logger) {
+          
+          logger.print(F("GPS,"));
+          logger.print(currentLocation.latitude, 6);
+          logger.print(F(","));
+          logger.print(currentLocation.longitude, 6);
+          logger.print(F(","));
+          logger.print(GPS.latitudeDegrees, 6);
+          logger.print(F(","));
+          logger.println(GPS.longitudeDegrees, 6);
+          
+          logger.print(F("TIME,"));
+          logger.print(GPS.hour, DEC);
+          logger.print(F(":"));
+          logger.print(GPS.minute, DEC);
+          logger.print(F(":"));
+          logger.println(GPS.seconds, DEC);
+        }
+        
+      }
+    }  
+  }
+
+}
