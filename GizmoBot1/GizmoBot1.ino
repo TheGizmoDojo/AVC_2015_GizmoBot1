@@ -117,6 +117,7 @@ void init_gps() {
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
   // Set the update rate
   GPS.sendCommand(PMTK_SET_NMEA_UPDATE_5HZ);
+  GPS.sendCommand(PMTK_API_SET_FIX_CTL_5HZ); // Added this
   // Request updates on antenna status, comment out to keep quiet
   GPS.sendCommand(PGCMD_ANTENNA);
 
@@ -199,7 +200,7 @@ float calculate_compass_bearing(double x, double y) {
 float convert_to_decimal_degrees(float f) {
   int d = (int) f/100;
   f -= d*100;
-  return d + (f/60.0);
+  return (f/60.0) + d;
 }
 
 
@@ -378,6 +379,7 @@ void loop() {
   Serial.println(F("Looping. Please pay attention to my damn output!"));
  
   // check for new GPS info 
+  GPS.read();
   if (GPS.newNMEAreceived()) {
     if (GPS.parse(GPS.lastNMEA())) {
       if (GPS.fix) {
@@ -390,9 +392,9 @@ void loop() {
         currentLocation.longitude = 0 - convert_to_decimal_degrees(GPS.longitude); 
         
         Serial.print("Lattitude: ");
-        Serial.print(currentLocation.latitude);
+        Serial.print(currentLocation.latitude, 8);
         Serial.print("    Longitude: ");
-        Serial.println(currentLocation.longitude);
+        Serial.println(currentLocation.longitude, 8);
         
       }
     }  
@@ -404,7 +406,8 @@ void loop() {
       // coast
       set_motor_speeds(0, 0);
     }
-    return;
+   Serial.println("NO GPS FIX");
+   return;
   }
   
   measure_sonar();
