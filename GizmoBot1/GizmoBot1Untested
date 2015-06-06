@@ -1,0 +1,196 @@
+/**
+ * Arduino code for TGD Autonomous Vehicle
+ *
+ * Authors: TGD AVC committee
+ *
+ * License: CC Share/Share-alike
+ *
+ * Target: Arduino Mega 2560
+ */
+
+#include "TimerOne.h"
+#include "TGD_Movement.h" // Set pin assignments in "TGD_Movement.h"
+#include "location.h"
+#include <Adafruit_GPS.h>
+#include <SoftwareSerial.h>
+#include <SD.h>
+
+// For GPS: Use hardware interupts on Mega (pins 18,19)
+Adafruit_GPS GPS(&Serial1); 
+
+
+/**************************************************************************
+ *
+ * Global variables
+ *
+ *************************************************************************/
+ 
+
+boolean gpsFix = true;
+
+
+/** init_gps()  */
+void init_gps() {
+Serial.print(F("init_gps() ... "));
+GPS.begin(9600);                               // 9600 NMEA is the default baud rate for Adafruit MTK GPS's- some use 4800
+GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);  // uncomment this line to turn on RMC (recommended minimum) and GGA (fix data) including altitude
+GPS.sendCommand(PMTK_SET_NMEA_UPDATE_5HZ);     // Set the update rate
+GPS.sendCommand(PGCMD_ANTENNA);                // Request updates on antenna status, comment out to keep quiet
+//  // start interrupt timer
+OCR0A = 0xAF;
+TIMSK0 |= _BV(OCIE0A);
+
+Serial.println(F("OK!"));
+}
+
+/** calc difference between two DMS (degrees, minutes, seconds) numbers ... not needed if we use decimal degrees everywhere */
+double calculate_difference(double l1, double l2) {
+
+  int d1 = l1 / 100;
+  int d2 = l2 / 100;
+  double m1 = l1 - (d1 * 100);
+  double m2 = l2 - (d2 * 100);
+  double ret = ((d1*60.0f)+m1) - ((d2*60.0f)+m2);
+
+  return ret;
+   
+}
+
+void get_next_waypoint() {
+
+  if (nextWaypointIndex == waypointCount) {
+ //!!!//   set_motor_speeds(0,0);  // Change to fit our motor code
+    if (logger) {
+      logger.println(F("COMPLETED_COURSE"));
+    }
+    while (1) {
+      delay(1000);
+    }
+  }
+  
+targetLocation.latitude  = WAYPOINT[nextWaypointIndex].latitude;
+targetLocation.longitude = WAYPOINT[nextWaypointIndex].longitude;
+  
+if (logger) {
+  logger.print(F("WAYPOINT,"));
+  logger.print(nextWaypointIndex);
+  logger.print(",");
+  logger.print(targetLocation.latitude);
+  logger.print(",");
+  logger.println(targetLocation.longitude);
+}
+  
+ nextWaypointIndex++;
+} 
+
+void setup() {
+  // put your setup code here, to run once:
+  
+  init_gps();
+  init_movement();
+  
+//  demoCode();
+
+  speedDemo(50);
+  
+   get_next_waypoint();
+  
+}
+
+
+// Interrupt is called once a millisecond, looks for any new GPS data, and stores it
+SIGNAL(TIMER0_COMPA_vect) {
+  GPS.read();
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  
+  // check current and destination location.
+  // calculate heading to get from a to b.
+  // compare it to current heading.
+  // check for obstacles.
+  // turn vehicle to correct heading.
+  // check for obstacles.
+  // move forward for 1 second and stop.
+  
+//  Serial.println(F("loop()"));
+
+// check for new GPS info 
+  if (GPS.newNMEAreceived()) {
+    if (GPS.parse(GPS.lastNMEA())) {
+      if (GPS.fix) {
+        if (!gpsFix) {
+          gpsFix = true;
+          if (logger) {
+            logger.println(F("GPS_FIX"));
+          }
+        }
+        // update current location
+        currentLocation.latitude = convert_to_decimal_degrees(GPS.latitude);
+        // convert longitude to negative number for WEST
+        currentLocation.longitude = 0 - convert_to_decimal_degrees(GPS.longitude); 
+        
+        // log every GPS update (max 5 times per second)
+        if (logger) {
+          
+          logger.print(F("GPS,"));
+          logger.print(currentLocation.latitude, 6);
+          logger.print(F(","));
+          logger.print(currentLocation.longitude, 6);
+          logger.print(F(","));
+          logger.print(GPS.latitudeDegrees, 6);
+          logger.print(F(","));
+          logger.println(GPS.longitudeDegrees, 6);
+          
+          logger.print(F("TIME,"));
+          logger.print(GPS.hour, DEC);
+          logger.print(F(":"));
+          logger.print(GPS.minute, DEC);
+          logger.print(F(":"));
+          logger.println(GPS.seconds, DEC);
+        }
+        
+      }
+    }  
+  }
+  
+  if (!GPS.fix) {
+    if (gpsFix) {
+      gpsFix = false;
+      if (logger) {
+        logger.println(F("GPS_NO_FIX"));
+      }
+      // coast
+      set_motor_speeds(0, 0);
+    }
+    return;
+  }
+
+}
+
+  // have we reached the waypoint yet?
+  if (fabs(diffLon) <= ACCURACY && fabs(diffLat) <= ACCURACY) {
+    if (logger) {
+      logger.println(F("REACHED_WAYPOINT"));
+    }
+    get_next_waypoint();
+    return;
+  }
+
+void demoCode() { //Run demo for Sparkfun proof-of-concept
+  move_forward_stop(1000);     // Move forward for one second and stop.
+  delay(500);                  // Pause for half a second.
+  move_reverse_stop(1000);     // Move backwards for one second and stop.
+  delay(500);                  // Pause for half a second.
+  wheels_left();               // Turn wheels left.
+  move_forward_stop(750);      // Move forward while turning left for 0.75 seconds.
+  delay(500);                  // Pause for half a second.
+  move_reverse_stop(750);      // Move backwards with wheels turned left for 0.75 seconds.
+  delay(500);                  // Pause for half a second.
+  wheels_right();              // Turn wheels right.
+  move_forward_stop(750);      // Move forward while turning right for 0.75 seconds.
+  delay(500);                  // Pause for half a second.
+  move_reverse_stop(750);      // Move backwards with wheels turned right for 0.75 seconds.
+  wheels_center();             // Turn wheels to point straight forward. 
+}
