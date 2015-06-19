@@ -5,31 +5,6 @@
  *
  * License: None. Feel free to use in your projects.
  */
-<<<<<<< HEAD
-=======
- 
-#include "TGD_Movement.h" // Set pin assignments in "TGD_Movement.h"
-#include "location.h"
-
-/** init_gps() */
-void init_gps() {
-  Serial.print(F("init_gps() ... "));
-  // 9600 NMEA is the default baud rate for Adafruit MTK GPS's- some use 4800
-  GPS.begin(9600);
-  // uncomment this line to turn on RMC (recommended minimum) and GGA (fix data) including altitude
-  GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
-  // Set the update rate
-  GPS.sendCommand(PMTK_SET_NMEA_UPDATE_5HZ);
-  // Request updates on antenna status, comment out to keep quiet
-  GPS.sendCommand(PGCMD_ANTENNA);
-
-  // start interrupt timer
-  OCR0A = 0xAF;
-  TIMSK0 |= _BV(OCIE0A);
-  
-  Serial.println(F("OK!"));
-}
->>>>>>> origin/master
 
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
@@ -38,8 +13,29 @@ void init_gps() {
 #include <SPI.h>
 #include <NewPing.h>
 #include <LSM303.h>
-#include "TGD_Movement.h"
+ 
+#include "TGD_Movement.h" // Set pin assignments in "TGD_Movement.h"
 #include "location.h"
+
+/** init_gps() */
+//void init_gps() {
+//  Serial.print(F("init_gps() ... "));
+//  // 9600 NMEA is the default baud rate for Adafruit MTK GPS's- some use 4800
+//  GPS.begin(9600);
+//  // uncomment this line to turn on RMC (recommended minimum) and GGA (fix data) including altitude
+//  GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
+//  // Set the update rate
+//  GPS.sendCommand(PMTK_SET_NMEA_UPDATE_5HZ);
+//  // Request updates on antenna status, comment out to keep quiet
+//  GPS.sendCommand(PGCMD_ANTENNA);
+//
+//  // start interrupt timer
+//  OCR0A = 0xAF;
+//  TIMSK0 |= _BV(OCIE0A);
+//  
+//  Serial.println(F("OK!"));
+//}
+
 
 /** Office Evolution */
 Location WAYPOINT[] = {
@@ -86,8 +82,25 @@ Location WAYPOINT[] = {
 #define sharp_turn_degrees    45.0f // degrees should be 20
 #define ACCURACY            0.00004 //0.00004 used in testing and works well.
 
+#define goPin 10 //Flip switch for go
+
+#define GPS_PERIOD 10
+
 LSM303 compass;
 
+volatile bool interrupted;
+
+bool forward;
+bool pseudoPWMOn;
+int speedOnMillis;
+int speedOffMillis;
+int speedCount;
+int reverseMillis;
+int leftMillis;
+int rightMillis;
+int gpsTimer;
+
+long millisecondTracker; //testing only
 
 // compass connects to A4/A5
 
@@ -264,9 +277,18 @@ void get_next_waypoint() {
 void set_motor_speeds(int left, int right) {
   
 
-#ifdef ENABLE_MOTORS
-  // I wired the motors backwards in every possible way ... so reverse polarity *and* left/right here
-#endif
+//#ifdef ENABLE_MOTORS
+//  // I wired the motors backwards in every possible way ... so reverse polarity *and* left/right here
+//#endif
+
+  setForwardSpeed(MAX_SPEED);
+  if( left > right ) {
+    turnForXMillis(50, true); //turn left for 50ms
+  } else if( right > left ) {
+    turnForXMillis(50, false); //turn right for 50ms
+  }
+
+
 }
 
 /** 
@@ -305,24 +327,40 @@ boolean about_to_crash() {
     }
   }
   if (emergency_stop) {
-    delay(100);
+//    delay(100);
+    reverseForXMillis(50); //reverse for 50ms
   }
   return emergency_stop;
 }  
 
 void avoid_obstacle(boolean turn_left) {
 
+  //brake
+  reverseForXMillis(50); //brake for 50ms
+  setForwardSpeed(0);
+
   // hit left or right brakes  
   if (turn_left) {
+    turnForXMillis(250, true); //turn left for 250ms
   } else {
+    turnForXMillis(250, false); //turn right for 250ms
   }
   
   // wait
-  delay(brake_delay_on_turn);
+//  delay(brake_delay_on_turn);
+  delay(250);
 
   // release brakes
 
-  // which sonar to monitor?
+  // which sonar to monitor?  
+  //Note: the 2 lines setting front_index and side_index are equivalent to the following:
+//  if( turn_left ) {
+//    front_index = 3;
+//    side_index = 4;
+//  } else {
+//    front_index = 1;
+//    side_index = 0;
+//  }
   int front_index = turn_left ? 3 : 1;
   int side_index = turn_left ? 4 : 0;
   
@@ -334,9 +372,13 @@ void avoid_obstacle(boolean turn_left) {
     measure_sonar();
     if (!about_to_crash()) {
       if (turn_left) {
-        set_motor_speeds(0, MAX_SPEED);
+//        set_motor_speeds(0, MAX_SPEED);
+        setForwardSpeed(MAX_SPEED);
+        turnForXMillis(250, true); //turn left for 250ms
       } else {
-        set_motor_speeds(MAX_SPEED, 0);
+//        set_motor_speeds(MAX_SPEED, 0);
+        setForwardSpeed(MAX_SPEED);
+        turnForXMillis(250, false); //turn right for 250ms
       }
     }
   }
@@ -357,12 +399,16 @@ float calculate_motor_speed(float angle_diff_abs) {
 
 void setup() {
   
+  pinMode(goPin, INPUT);
+  
   Serial.begin(115200);
-  Serial.println(F("Welcome to GizmoBot 0.1"));
-  Serial.println(F("Our goal is to ensure your satisfaction with our products..."));
-  Serial.println(F("If at any time you are unsatisfied with the performance of our products,"));
-  delay(1500);
-  Serial.println(F("it's probably your fault."));
+  Serial.println(F("Welcome to GizmoBot 0.2"));
+//  Serial.println(F("Our goal is to ensure your satisfaction with our products..."));
+//  Serial.println(F("If at any time you are unsatisfied with the performance of our products,"));
+//  delay(1500);
+//  Serial.println(F("it's probably your fault."));
+  
+  gpsTimer = 0;
   
   init_compass();
   init_gps();
@@ -372,6 +418,35 @@ void setup() {
   
   // start switch
   //pinMode(40, INPUT);
+  
+  
+  //set up timer2 interrupt
+  cli();//stop interrupts
+  
+  interrupted = false;
+
+  //set timer0 interrupt at 2kHz
+//  TCCR0A = 0;// set entire TCCR2A register to 0
+//  TCCR0B = 0;// same for TCCR2B
+//  TCNT0  = 0;//initialize counter value to 0
+  // set compare match register for 2khz increments
+  OCR3B = 30;// = (16*10^6) / (2000*64) - 1 (must be <256)   THG note: not exactly 1msec, would like to do the math to make it 1ms
+  // turn on CTC mode
+//  TCCR0A |= (1 << WGM01);
+  // Set CS01 and CS00 bits for 64 prescaler
+//  TCCR0B |= (1 << CS01) | (1 << CS00);   
+  // enable timer compare interrupt
+  TIMSK3 |= (1 << OCIE3B);
+
+  sei();//allow interrupts
+
+  Serial.println("Ready...");
+  
+  while( digitalRead(goPin) ); //Wait for go switch
+  
+  Serial.println("GO!");
+  
+  millisecondTracker = 0;
   
 }
 
@@ -401,7 +476,7 @@ void loop_test_motors() {
 
 void loop() {
 
-  Serial.println(F("Looping. Please pay attention to my damn output!"));
+//  Serial.println(F("Looping. Please pay attention to my damn output!"));
  
   // check for new GPS info 
   GPS.read();
@@ -416,7 +491,7 @@ void loop() {
         // convert longitude to negative number for WEST
         currentLocation.longitude = 0 - convert_to_decimal_degrees(GPS.longitude); 
         
-        Serial.print("Lattitude: ");
+        Serial.print("Latitude: ");
         Serial.print(currentLocation.latitude, 8);
         Serial.print("    Longitude: ");
         Serial.println(currentLocation.longitude, 8);
@@ -496,7 +571,78 @@ void loop() {
   }
 
   // set speed according to navigation
-  set_motor_speeds(left_speed, right_speed);  
+//  set_motor_speeds(left_speed, right_speed);  
   
+    if( interrupted ) {
+    interrupted = false;
+  
+    //drive logic
+    if( reverseMillis > 0 ) { //reversing
+      setForwardOff(); //don't drive forward
+      //decrement reversing counter
+      reverseMillis -= 1;
+      setMovementReverse();
+    } else { //not reversing
+      setReverseOff(); //don't drive in reverse
+      if( pseudoPWMOn ) {
+        //pseudo PWM is high
+        speedCount += 1;
+        if( speedCount >= speedOnMillis ) {
+          Serial.print("PWM off");
+//          Serial.print(speedCount);
+//          Serial.print(speedOnMillis);
+          pseudoPWMOn = false;
+          speedCount = 0;
+          setForwardOff();
+        }
+      } else {
+        //pseudo PWM is low
+        speedCount += 1;
+        if( speedCount >= speedOffMillis ) {
+          Serial.print("PWM on");
+//          Serial.print(speedCount);
+//          Serial.print(speedOffMillis);
+          pseudoPWMOn = true;
+          speedCount = 0;
+          setMovementForward();
+        }
+      }
+    }
+    if( leftMillis > 0 ) { //turning left
+      setWheelsNotRight();
+      //decrement left counter
+      leftMillis -= 1;
+      setWheelsLeft();
+    } else {
+      setWheelsNotLeft();
+    }
+    if( rightMillis > 0 ) { //turning right
+      setWheelsNotLeft();
+      //decrement right counter
+      rightMillis -= 1;
+      setWheelsRight();
+    } else {
+      setWheelsNotRight();
+    }
+  
+    //Other millisecond logic
+    
+    millisecondTracker += 1;
+    
+    if( millisecondTracker % 1000 == 0 ) {
+      Serial.println(millisecondTracker);
+    }
+    
+    gpsTimer += 1;
+    
+    if( gpsTimer 
+  
+  }
+
+  
+}
+
+ISR(TIMER3_COMPB_vect){//timer0 interrupt 1kHz
+  interrupted = true;
 }
 
