@@ -10,4 +10,4 @@ public:
 };
 
 
-#endif __LOCATION_H_
+#endif // __LOCATION_H_
