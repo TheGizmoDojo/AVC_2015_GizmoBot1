@@ -7,10 +7,10 @@ using std::ostream;
 using std::sqrt;
 
 
-float Point::headingTo_d(const Point& other) const {
-  float angle = -((atan2f(other.y_m - y_m, other.x_m - x_m) / M_PI * 180) - 90);
+float Point::headingTo_r(const Point& other) const {
+  float angle = -((atan2f(other.y_m - y_m, other.x_m - x_m)) - M_PI / 2);
   if (angle < 0) {
-    angle += 360;
+    angle += 2 * M_PI;
   }
   return angle;
 }
@@ -23,14 +23,14 @@ float Point::distanceTo_m(const Point& other) const {
 }
 
 
-float Point::relativeHeadingTo_d(float heading_d, const Point& other) const {
-  const float otherHeading_d = headingTo_d(other);
-  double difference = otherHeading_d - heading_d;
-  while (difference < -180) {
-    difference += 360;
+float Point::relativeHeadingTo_r(float heading_r, const Point& other) const {
+  const float otherHeading_r = headingTo_r(other);
+  double difference = otherHeading_r - heading_r;
+  while (difference < -M_PI) {
+    difference += 2 * M_PI;
   }
-  while (difference > 180) {
-    difference -= 360;
+  while (difference > M_PI) {
+    difference -= 2 * M_PI;
   }
   return difference;
 }
@@ -43,8 +43,9 @@ ostream& operator<<(ostream& out, const Point& rhs) {
 
 
 // This is purposely left out of the header file. Users should use the function
-// that assumes the wheel_separation. This isn't defined as static for testing.
-void _computeArcTurn(const float leftDistance_m, const float rightDistance_m, const float wheelSeparation_m, float* const angle_d, float* const innerRadius_m) {
+// that assumes the wheel_separation. This isn't defined as static so that it
+// can be used for testing.
+void _computeArcTurn(const float leftDistance_m, const float rightDistance_m, const float wheelSeparation_m, float* const angle_r, float* const innerRadius_m) {
   // Let x = distance from pivot point to inner wheel, unknown
   // Let y = distance between wheels, known
   // Let a1 = length of closer arc, inner wheel
@@ -61,46 +62,39 @@ void _computeArcTurn(const float leftDistance_m, const float rightDistance_m, co
   // m = (a2 - a1) / (2 * pi * y) * 360
 
   // TODO: Optimize this; factor out some common multiplications and divisions
-  *angle_d = (leftDistance_m - rightDistance_m) / (2 * M_PI * wheelSeparation_m) * 360;
-  if (*angle_d == 0) {
+  if (leftDistance_m == rightDistance_m) {
     *innerRadius_m = 1000000;
+    *angle_r = 0;
   } else {
-    *innerRadius_m = min(leftDistance_m, rightDistance_m) / (fabs(*angle_d / 360) * (2 * M_PI));
+    const float fraction = (leftDistance_m - rightDistance_m) / (2 * M_PI * wheelSeparation_m);
+    *angle_r = fraction * 2 * M_PI;
+    *innerRadius_m = min(leftDistance_m, rightDistance_m) / (fabs(fraction) * 2 * M_PI);
   }
 }
 
 
 // This is purposely left out of the header file. Users should use the function
-// that assumes the wheel_separation. This isn't defined as static for testing.
-void _computeArcTurn(const float leftDistance_m, const float rightDistance_m, const float wheelSeparation_m, float* const angle_d) {
-  *angle_d = (leftDistance_m - rightDistance_m) / (2 * M_PI * wheelSeparation_m) * 360;
+// that assumes the wheel_separation. This isn't defined as static so that it
+// can be used for testing.
+void _computeArcTurn(const float leftDistance_m, const float rightDistance_m, const float wheelSeparation_m, float* const angle_r) {
+  *angle_r = (leftDistance_m - rightDistance_m) / (2 * M_PI * wheelSeparation_m) * 2 * M_PI;
 }
 
 
 static const float WHEEL_SEPARATION_M = 0.175;
 
 
-void computeArcTurn(const float leftDistance_m, const float rightDistance_m, float* const angle_d) {
-  return _computeArcTurn(leftDistance_m, WHEEL_SEPARATION_M, rightDistance_m, angle_d);
-}
-
-
-void computeArcTurn(const float leftDistance_m, const float rightDistance_m, float* const angle_d, float* const innerRadius_m) {
-  return _computeArcTurn(leftDistance_m, WHEEL_SEPARATION_M, rightDistance_m, angle_d, innerRadius_m);
-}
-
-
 // This is purposely left out of the header file. Users should use the function
 // that assumes the wheel_separation. This isn't defined as static for testing.
-void _computeHeadingDistance(const float leftDistance_m, const float rightDistance_m, const float wheelSeparation_m, float* const heading_d, float* direction_d, float* const distance_m) {
+void _computeHeadingDistance(const float leftDistance_m, const float rightDistance_m, const float wheelSeparation_m, float* const heading_r, float* direction_r, float* const distance_m) {
   if (leftDistance_m == rightDistance_m) {
-    *heading_d = 0;
+    *heading_r = 0;
     *distance_m = leftDistance_m;
-    *direction_d = 0;
+    *direction_r = 0;
     return;
   }
   float innerRadius_m;
-  _computeArcTurn(leftDistance_m, rightDistance_m, wheelSeparation_m, heading_d, &innerRadius_m);
+  _computeArcTurn(leftDistance_m, rightDistance_m, wheelSeparation_m, heading_r, &innerRadius_m);
   const float midRadius_m = innerRadius_m + (0.5 * wheelSeparation_m);
   // Let the middle of the wheels be the origin.
   // Rotate the vector from pivot point to middle of wheels by heading_d.
@@ -110,18 +104,18 @@ void _computeHeadingDistance(const float leftDistance_m, const float rightDistan
   // That gives us (x, y) but that's from the point of view of the pivot point.
   const bool rightTurn = leftDistance_m > rightDistance_m;
   const float xVector_m = rightTurn ? -midRadius_m : midRadius_m;
-  const float xPointFromPivot_m = cos(*heading_d * M_PI / 180) * xVector_m;
-  const float yPointFromPivot_m = -sin(*heading_d * M_PI / 180) * xVector_m;
+  const float xPointFromPivot_m = cos(*heading_r) * xVector_m;
+  const float yPointFromPivot_m = -sin(*heading_r) * xVector_m;
   // But we want it from the point of view of the car's midpoint
-  float xPoint_m = (rightTurn ? midRadius_m : -midRadius_m) + xPointFromPivot_m;
+  const float xPoint_m = (rightTurn ? midRadius_m : -midRadius_m) + xPointFromPivot_m;
   const float yPoint_m = yPointFromPivot_m;
   *distance_m = sqrt((xPoint_m * xPoint_m) + (yPoint_m * yPoint_m));
   // atan2f returns the angle from (1, 0) in the counter-clockwise direction. We
   // want the angle from (0, 1) in the clockwise direction.
-  *direction_d = 90 - atan2f(yPoint_m, xPoint_m) * 180 / M_PI;
+  *direction_r = M_PI / 2 - atan2f(yPoint_m, xPoint_m);
 }
 
 
-void computeHeadingDistance(const float leftDistance_m, const float rightDistance_m, float* const heading_d, float* const direction_d, float* const distance_m) {
-  return _computeHeadingDistance(leftDistance_m, rightDistance_m, WHEEL_SEPARATION_M, heading_d, direction_d, distance_m);
+void computeHeadingDistance(const float leftDistance_m, const float rightDistance_m, float* const heading_r, float* const direction_r, float* const distance_m) {
+  return _computeHeadingDistance(leftDistance_m, rightDistance_m, WHEEL_SEPARATION_M, heading_r, direction_r, distance_m);
 }
