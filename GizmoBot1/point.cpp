@@ -108,18 +108,17 @@ void _computeHeadingDistance(const float leftDistance_m, const float rightDistan
   // |  cos sin |   | +/-midRadius_m |
   // | -sin cos | X |        0       |
   // That gives us (x, y) but that's from the point of view of the pivot point.
-  const float xVector_m = leftDistance_m > rightDistance_m ? -midRadius_m : midRadius_m;
-  const float rotation_d = leftDistance_m > rightDistance_m ? -*heading_d : *heading_d;
-  const float xPointFromPivot_m = cos(rotation_d * M_PI / 180) * xVector_m;
-  const float yPointFromPivot_m = sin(rotation_d * M_PI / 180) * xVector_m;
+  const bool rightTurn = leftDistance_m > rightDistance_m;
+  const float xVector_m = rightTurn ? -midRadius_m : midRadius_m;
+  const float xPointFromPivot_m = cos(*heading_d * M_PI / 180) * xVector_m;
+  const float yPointFromPivot_m = -sin(*heading_d * M_PI / 180) * xVector_m;
   // But we want it from the point of view of the car's midpoint
-  float xPoint_m = midRadius_m + xPointFromPivot_m;
+  float xPoint_m = (rightTurn ? midRadius_m : -midRadius_m) + xPointFromPivot_m;
   const float yPoint_m = yPointFromPivot_m;
   *distance_m = sqrt((xPoint_m * xPoint_m) + (yPoint_m * yPoint_m));
+  // atan2f returns the angle from (1, 0) in the counter-clockwise direction. We
+  // want the angle from (0, 1) in the clockwise direction.
   *direction_d = 90 - atan2f(yPoint_m, xPoint_m) * 180 / M_PI;
-  if (*heading_d < 0) {
-    *direction_d = -*direction_d;
-  }
 }
 
 

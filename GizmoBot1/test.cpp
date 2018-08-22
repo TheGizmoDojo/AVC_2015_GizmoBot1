@@ -234,8 +234,7 @@ void testComputeHeadingDistance() {
   assertClose(distance_m, 1);
 
   // Uneven turn
-  _computeHeadingDistance(2.5, 2.0, 1.0, &heading_d, &direction_d, &distance_m);
-  // TODO
+  _computeHeadingDistance(2.0, 2.5, 1.0, &heading_d, &direction_d, &distance_m);
   assert(-45 < heading_d && heading_d < 0);
   assert(heading_d < direction_d);
   assert(2.0 < distance_m && distance_m < 2.5);
@@ -254,5 +253,4 @@ void testComputeHeadingDistance() {
   assertClose(heading_d, 0);
   assertClose(direction_d, 0);
   assertClose(distance_m, 4.0);
-
 }
