@@ -1,8 +1,8 @@
-test: test.o point.o
+test: test.o GizmoBot1/point.o
 	$(LINK.cc) -o $@ $^
 
-point.o:	point.cpp point.h
+GizmoBot1/point.o:	GizmoBot1/point.cpp GizmoBot1/point.h
 
 .PHONY:	clean
 clean:
-	rm test *.o
+	rm -f test *.o GizmoBot1/*.o

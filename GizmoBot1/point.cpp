@@ -30,7 +30,7 @@ float Point::distanceTo_m(const Point& other) const {
 float Point::relativeHeadingTo_r(float heading_r, const Point& other) const {
   const float otherHeading_r = headingTo_r(other);
   double difference = otherHeading_r - heading_r;
-  while (difference < PI) {
+  while (difference < -PI) {
     difference += 2 * PI;
   }
   while (difference > PI) {
