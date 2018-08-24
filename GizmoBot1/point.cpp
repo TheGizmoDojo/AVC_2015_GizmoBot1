@@ -1,16 +1,20 @@
 #include "point.h"
-#include <algorithm>
-#include <cmath>
-#include <ostream>
-using std::min;
-using std::ostream;
-using std::sqrt;
+
+#ifdef ARDUINO
+  #include <math.h>
+  const float PI = 3.141592653589793238462643383279;
+#else
+  #include <ostream>
+  #include <cmath>
+  using std::sqrt;
+  const double PI = M_PI;
+#endif
 
 
 float Point::headingTo_r(const Point& other) const {
-  float angle = -((atan2f(other.y_m - y_m, other.x_m - x_m)) - M_PI / 2);
+  float angle = -((atan2f(other.y_m - y_m, other.x_m - x_m)) - PI / 2);
   if (angle < 0) {
-    angle += 2 * M_PI;
+    angle += 2 * PI;
   }
   return angle;
 }
@@ -26,21 +30,25 @@ float Point::distanceTo_m(const Point& other) const {
 float Point::relativeHeadingTo_r(float heading_r, const Point& other) const {
   const float otherHeading_r = headingTo_r(other);
   double difference = otherHeading_r - heading_r;
-  while (difference < -M_PI) {
-    difference += 2 * M_PI;
+  while (difference < PI) {
+    difference += 2 * PI;
   }
-  while (difference > M_PI) {
-    difference -= 2 * M_PI;
+  while (difference > PI) {
+    difference -= 2 * PI;
   }
   return difference;
 }
 
 
-ostream& operator<<(ostream& out, const Point& rhs) {
+#ifndef ARDUINO
+std::ostream& operator<<(std::ostream& out, const Point& rhs) {
   out << rhs.x_m << " " << rhs.y_m;
   return out;
 }
+#endif
 
+
+#define min(a, b) ((a) < (b) ? (a) : (b))
 
 // This is purposely left out of the header file. Users should use the function
 // that assumes the wheel_separation. This isn't defined as static so that it
@@ -66,9 +74,9 @@ void _computeArcTurn(const float leftDistance_m, const float rightDistance_m, co
     *innerRadius_m = 1000000;
     *angle_r = 0;
   } else {
-    const float fraction = (leftDistance_m - rightDistance_m) / (2 * M_PI * wheelSeparation_m);
-    *angle_r = fraction * 2 * M_PI;
-    *innerRadius_m = min(leftDistance_m, rightDistance_m) / (fabs(fraction) * 2 * M_PI);
+    const float fraction = (leftDistance_m - rightDistance_m) / (2 * PI * wheelSeparation_m);
+    *angle_r = fraction * 2 * PI;
+    *innerRadius_m = min(leftDistance_m, rightDistance_m) / (fabs(fraction) * 2 * PI);
   }
 }
 
@@ -77,7 +85,7 @@ void _computeArcTurn(const float leftDistance_m, const float rightDistance_m, co
 // that assumes the wheel_separation. This isn't defined as static so that it
 // can be used for testing.
 void _computeArcTurn(const float leftDistance_m, const float rightDistance_m, const float wheelSeparation_m, float* const angle_r) {
-  *angle_r = (leftDistance_m - rightDistance_m) / (2 * M_PI * wheelSeparation_m) * 2 * M_PI;
+  *angle_r = (leftDistance_m - rightDistance_m) / (2 * PI * wheelSeparation_m) * 2 * PI;
 }
 
 
@@ -112,7 +120,7 @@ void _computeHeadingDistance(const float leftDistance_m, const float rightDistan
   *distance_m = sqrt((xPoint_m * xPoint_m) + (yPoint_m * yPoint_m));
   // atan2f returns the angle from (1, 0) in the counter-clockwise direction. We
   // want the angle from (0, 1) in the clockwise direction.
-  *direction_r = M_PI / 2 - atan2f(yPoint_m, xPoint_m);
+  *direction_r = PI / 2 - atan2f(yPoint_m, xPoint_m);
 }
 
 
