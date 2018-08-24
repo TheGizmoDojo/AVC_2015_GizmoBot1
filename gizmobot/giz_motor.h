@@ -2,7 +2,6 @@
 #define __GIZ_MOTOR
 #include <Servo.h>
 
-#define MOTOR_PIN
 #define MOTOR_PIN 12
 #define MOTOR_MID 90
 #define MOTOR_SPEED 14 //20 is speedy

@@ -2,6 +2,8 @@
 #include "giz_gps.h"
 #include "giz_compass.h"
 #include "giz_motor.h"
+#include "giz_steering.h"
+#include "vec2d.h"
 //#include "giz_wheel_encoder.h"
 
 float position;//x,y from lat,lng
@@ -9,20 +11,22 @@ float current_heading;
 float desired_heading;
 double dt,last_micros;
 
-//  Point WAYPOINTS[] = {
-//    Point(-104.98004913, 39.88695907),
-//    Point(-104.97996520, 39.88705062),
-//    Point(-104.98004913, 39.88694763)
-//  };
+
+ Vec2d WAYPOINTS[] = {
+   Vec2d(-104.98004913, 39.88695907),
+   Vec2d(-104.97996520, 39.88705062),
+   Vec2d(-104.98004913, 39.88694763)
+ };
 
 GizCompass giz_compass;
 GizGps giz_gps;
 GizMotor giz_motor;
+GizSteering giz_steering;
 
 void setup() {
 Serial.begin(115200);
 giz_motor.init();
-//stearing.init();//implement
+giz_steering.init();
 giz_compass.init();
 giz_gps.init();
 
@@ -34,10 +38,10 @@ void loop() {
     dt=micros()-last_micros;
     last_micros=micros();
 
-
       //get our position && heading
       giz_compass.update();
       giz_gps.update();//we could run this at slower rate 
+
       //wheel_encoder.update();
 
     //update_position(); 
@@ -59,6 +63,7 @@ void loop() {
 }
 
 static void increment_desired_waypoint(){
+
 
 }
 
