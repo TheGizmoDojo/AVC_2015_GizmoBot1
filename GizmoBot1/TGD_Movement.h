@@ -1,7 +1,7 @@
 #ifndef __TGD_MOVEMENT_H_
 #define __TGD_MOVEMENT_H_
 
-#include <arduino.h> //Necessary for Arduino IDE > 1.00 (?)
+#include <Arduino.h> //Necessary for Arduino IDE > 1.00 (?)
 
 //#defines
 #define forwardPin 7

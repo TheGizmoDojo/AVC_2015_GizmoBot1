@@ -1,7 +1,9 @@
 #ifndef POINT_H
 #define POINT_H
 
-#include <iosfwd>
+#ifndef ARDUINO
+  #include <iosfwd>
+#endif
 
 
 struct Point {
@@ -11,7 +13,9 @@ struct Point {
   float headingTo_r(const Point& other) const;
   float distanceTo_m(const Point& other) const;
   float relativeHeadingTo_r(float heading_r, const Point& other) const;
+#ifndef ARDUINO
   friend std::ostream& operator<<(std::ostream& out, const Point& rhs);
+#endif
 };
 
 // Given how far the left and right wheels have turned, calculate the change in
