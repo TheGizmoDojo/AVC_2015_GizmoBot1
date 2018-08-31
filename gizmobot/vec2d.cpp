@@ -34,15 +34,15 @@ double Vec2d::cross(Vec2d &b){
     return ((x * b.y) - (y * b.x));
 }
 
-double Vec2d::directionTo(Vec2d &b){
+double Vec2d::directionTo_r(Vec2d &b){
     return atan2(b.y-y,b.x-x);
 }
 
-double Vec2d::directionFrom(Vec2d &b){
+double Vec2d::directionFrom_r(Vec2d &b){
     return atan2(y-b.y,x-b.x);
 }
 
-double Vec2d::distance(Vec2d &b){
+double Vec2d::distanceTo(Vec2d &b){
     return sqrt(
         (b.x-x) * (b.x-x) +
         (b.y-y) * (b.y-y)

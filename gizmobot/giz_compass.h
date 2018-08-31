@@ -11,10 +11,10 @@
 class GizCompass{
 
 public:
-  float heading;
+  GizCompass();
+  float heading_r;
   
 public:
-  void init();
   void update();
 };
 

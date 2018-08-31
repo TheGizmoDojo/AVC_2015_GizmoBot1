@@ -16,9 +16,9 @@ public:
 
     double dot(Vec2d&);
     double cross(Vec2d&);
-    double directionTo(Vec2d&);
-    double directionFrom(Vec2d&);
-    double distance(Vec2d&);
+    double directionTo_r(Vec2d&);
+    double directionFrom_r(Vec2d&);
+    double distanceTo(Vec2d&);
 
 };
 #endif 

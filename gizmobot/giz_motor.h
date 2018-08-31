@@ -13,12 +13,15 @@
 class GizMotor{
 
 public:
-  
-public:
-  void init();
+  GizMotor();
   void forward();
   void stop();
   void reverse();
+
+private:
+  GizMotor(const GizMotor&) = delete;
+  GizMotor(GizMotor&&) = delete;
+  GizMotor& operator=(const GizMotor&) = delete;
 };
 
 

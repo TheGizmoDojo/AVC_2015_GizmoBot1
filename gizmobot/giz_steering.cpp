@@ -2,7 +2,7 @@
 
 Servo steering;
 
-void GizSteering::init(){
+GizSteering::GizSteering(){
   steering.attach(STEER_PIN);
 }
 void GizSteering::steer(double v){
