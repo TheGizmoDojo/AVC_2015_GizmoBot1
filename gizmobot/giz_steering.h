@@ -16,7 +16,7 @@ public:
   
 public:
   void init();
-  void steer(double v);
+  void steer(int v);
 };
 
 

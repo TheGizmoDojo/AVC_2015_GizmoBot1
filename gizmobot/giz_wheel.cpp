@@ -1,11 +1,11 @@
 #include "giz_wheel.h"
-#include <stdint.h>
 
 const int LEFT_WHEEL_PIN = 2;
 const int RIGHT_WHEEL_PIN = 3;
 const double WHEEL_SEPARATION_M = .175;
-const double WHEEL_RADIUS_M = .100;//change this
-const double TICK_RADIUS_M = WHEEL_RADIUS/32;///correct this this
+const double WHEEL_DIAMETER = 0.079;
+const double WHEEL_CIRCUMFERENCE =WHEEL_DIAMETER * PI;
+const double TICK_DISTANCE = WHEEL_CIRCUMFERENCE/14;
 
 bool GizWheel::_initialized = false;
 static uint16_t left_wheel_ticks = 0;
@@ -13,16 +13,16 @@ static uint16_t right_wheel_ticks = 0;
 
 
 static void left_encoder_isr() {
-  ++left_wheel_ticks;
+  left_wheel_ticks++;
 }
-
 
 static void right_encoder_isr() {
-  ++right_wheel_ticks;
+  right_wheel_ticks++;
 }
 
+void GizWheel::init(){
+    Serial.begin(115200);
 
-GizWheel::GizWheel(const double wheel_separation_m) :  _wheel_separation_m(WHEEL_SEPARATION_M) {
   if (!_initialized) {
     _initialized = true;
     attachInterrupt(digitalPinToInterrupt(LEFT_WHEEL_PIN), left_encoder_isr, CHANGE);
@@ -32,18 +32,52 @@ GizWheel::GizWheel(const double wheel_separation_m) :  _wheel_separation_m(WHEEL
 }
 
 
-GizWheel::GizWheel() : GizWheel(WHEEL_SEPARATION_M) {
-}
+double lwt_total=0;
+double rwt_total=0;
+
+void GizWheel::update(){
+
+ Serial.print("l:");
+ Serial.println(left_wheel_ticks);
+    /// Serial.println(lDist);
+
+ Serial.print("r:");
+ Serial.println(right_wheel_ticks); 
 
 
-void update(){
+    //we sometime get bad data from wheel necoder
+    //it will just spike, lets try an ignore spikes
+//// if(left_wheel_ticks - right_wheel_ticks > 15){
+////	 left_wheel_ticks=right_wheel_ticks;
+//// }
+//// if(right_wheel_ticks - left_wheel_ticks > 15){
+////	 right_wheel_ticks=left_wheel_ticks;
+//// }
 
-    double lDist=left_wheel_ticks*TICK_RADIUS_M;
-    double rDist=right_wheel_ticks*TICK_RADIUS_M;
+    double lwt=left_wheel_ticks;
+    double rwt=right_wheel_ticks;
+    //set back to 0(or close)
+    left_wheel_ticks-=lwt;
+    right_wheel_ticks-=rwt;
+
+    lwt_total+=lwt;
+    rwt_total+=rwt;
+
+    double lDist=lwt*TICK_DISTANCE;
+    double rDist=rwt*TICK_DISTANCE;
+
+
+	Serial.print("left Total:");
+	Serial.println(lwt_total);
+    /// Serial.println(lDist);
+
+	Serial.print("Right Total:");
+	Serial.println(rwt_total); 
+
+ //Serial.print(",");
+/// Serial.println(rDist);
+
     //reset ticks
-    left_wheel_ticks=0;
-    right_wheel_ticks=0;
-
     if (fabs(lDist - rDist) < 1.0e-6){ 
         x_pos = x_pos + lDist * cos(heading);
         y_pos = y_pos + rDist * sin(heading);
@@ -58,7 +92,7 @@ void update(){
     }
 }
 
-double bound_angle(double a) {
+double GizWheel::bound_angle(double a) {
 	while(a <= -1*PI) {
 		a += 2*PI;
 	}
@@ -66,29 +100,4 @@ double bound_angle(double a) {
 		a -= 2*PI;
 	}
 	return a;
-}
-
-double GizWheel::get_left_distance_m() {
-
-double GizWheel::get_left_distance_m() {
-  const int ticks = left_wheel_ticks;
-  left_wheel_ticks -= ticks;
-  return ticks * _wheel_separation_m;
-}
-
-
-double GizWheel::get_right_distance_m() {
-  const int ticks = right_wheel_ticks;
-  right_wheel_ticks -= ticks;
-  return ticks * _wheel_separation_m;
-}
-
-
-double GizWheel::peek_left_distance_m() const {
-  return left_wheel_ticks * _wheel_separation_m;
-}
-
-
-double GizWheel::peek_right_distance_m() const {
-  return right_wheel_ticks * _wheel_separation_m;
 }
