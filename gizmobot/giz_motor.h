@@ -4,7 +4,7 @@
 
 #define MOTOR_PIN 12
 #define MOTOR_MID 90
-#define MOTOR_SPEED 7 //20 is speedy
+#define MOTOR_SPEED 6 //20 is speedy
 #define MOTOR_FORWARD MOTOR_MID-MOTOR_SPEED
 #define MOTOR_REVERSE MOTOR_MID+MOTOR_SPEED
 

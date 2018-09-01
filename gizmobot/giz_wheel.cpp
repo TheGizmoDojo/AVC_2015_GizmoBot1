@@ -2,6 +2,12 @@
 #include <stdint.h>
 #include <Arduino.h>
 
+//at speed 20=380 ticks/second
+//at 10=170 ticks/second
+//at 7=95 ticks/second
+//at 6=71 ticks/second
+//at 5=44 ticks/second
+
 const int LEFT_WHEEL_PIN = 2;
 const int RIGHT_WHEEL_PIN = 3;
 const double WHEEL_SEPARATION_M = .175;
@@ -14,13 +20,21 @@ bool GizWheel::_initialized = false;
 static uint16_t left_wheel_ticks = 0;
 static uint16_t right_wheel_ticks = 0;
 
+double last_left_encoder_update;
+double last_right_encoder_update;
 
 static void left_encoder_isr() {
-  left_wheel_ticks++;
+  if(micros()-last_left_encoder_update > 12000){
+      left_wheel_ticks++;
+      last_left_encoder_update=micros();//hmm,  maybe outside if?
+  }
 }
 
 static void right_encoder_isr() {
-  right_wheel_ticks++;
+  if(micros()-last_right_encoder_update > 12000){
+      right_wheel_ticks++;
+      last_right_encoder_update=micros();
+  }
 }
 
 GizWheel::GizWheel(){

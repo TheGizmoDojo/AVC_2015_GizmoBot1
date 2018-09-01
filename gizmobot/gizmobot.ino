@@ -15,8 +15,10 @@ double dt,last_micros;
 int current_waypoint = 0;
 
 Vec2d WAYPOINTS_M[] = {
- Vec2d(0,4),
- Vec2d(2,8)
+ Vec2d(0,20)
+// Vec2d(2,8),
+// Vec2d(4,4),
+// Vec2d(0,0)
 };
 
 
@@ -38,10 +40,9 @@ void loop() {
     dt=micros()-last_micros;
     last_micros=micros();
 
-
-      //get our position && heading
-      //giz_compass.update();
-      //giz_gps.update();//we could run this at slower rate 
+  //get our position && heading
+  //giz_compass.update();
+  //giz_gps.update();//we could run this at slower rate 
 
     giz_wheel.update();
 
@@ -53,13 +54,16 @@ void loop() {
     update_desired_heading();
     turn_to_desired_heading();
 
-    Serial.print("position:");
-    Serial.print(current_position_m.x,10);
-    Serial.print(",");
-    Serial.println(current_position_m.y,10);
+      Serial.print("position:");
+      Serial.print(current_position_m.x,10);
+      Serial.print(",");
+      Serial.println(current_position_m.y,10);
+      Serial.print("heading:");
+      Serial.println(current_heading_r);
+      Serial.print("desired heading:");
+      Serial.println(desired_heading_r);
 
-    Serial.print("heading:");
-    Serial.println(current_heading_r);
+
 
     //TODO:implement this
     // if(1hz_loop){
@@ -72,9 +76,12 @@ void loop() {
 }
 
 static void update_to_next_waypoint(){
-    if(current_waypoint >= sizeof(WAYPOINTS_M)/sizeof(WAYPOINTS_M[0])){
+    if(current_waypoint >= sizeof(WAYPOINTS_M)/sizeof(WAYPOINTS_M[0])-1){
         giz_motor.stop();
+        Serial.println("DONE");
     }else{
+        Serial.print("HIT WAYPOINT:");
+        Serial.println(current_waypoint + 1);
         current_waypoint++;
     }
 }
@@ -113,7 +120,7 @@ void turn_to_desired_heading(){
 
     double headingError_r=angle_diff_r(current_heading_r,desired_heading_r);
 
-    double scaleHeadingError=10;//can play w/ this
+    double scaleHeadingError=50;//can play w/ this
 
     giz_steering.steer((int) (headingError_r*scaleHeadingError));
 
