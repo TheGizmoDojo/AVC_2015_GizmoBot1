@@ -11,12 +11,15 @@
 
 
 class GizSteering{
-
-public:
   
 public:
   void init();
+  GizSteering();
   void steer(int v);
+private:
+  GizSteering(const GizSteering&) = delete;
+  GizSteering(GizSteering&&) = delete;
+  GizSteering& operator=(const GizSteering&) = delete;
 };
 
 

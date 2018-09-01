@@ -8,25 +8,16 @@
 
 //#define goPin 53 //Flip switch for go
 
-Vec2d current_position;//x,y from lat,lng
-double current_heading;
-double desired_heading;
+Vec2d current_position_m;//x,y from lat,lng
+double current_heading_r;
+double desired_heading_r;
 double dt,last_micros;
 int current_waypoint = 0;
 
-
-//   Vec2d WAYPOINTS[] = {
-//     Vec2d(-104.98004913, 39.88695907),
-//     Vec2d(-104.97996520, 39.88705062),
-//     Vec2d(-104.98004913, 39.88694763)
-//   };
-
-Vec2d WAYPOINTS[] = {
+Vec2d WAYPOINTS_M[] = {
  Vec2d(0,4),
  Vec2d(2,8)
 };
-
-
 
 
 GizCompass giz_compass;
@@ -36,20 +27,10 @@ GizSteering giz_steering;
 GizWheel giz_wheel;
 
 void setup() {
-
-//  pinMode(goPin, INPUT_PULLUP);
-
-Serial.begin(115200);
-giz_motor.init();
-giz_steering.init();
-giz_compass.init();
-giz_gps.init();
-giz_wheel.init();
-
-delay(1000);
-Serial.println("Going Forward!");
-giz_motor.forward();
-
+    Serial.begin(115200);
+    delay(1000);
+    Serial.println("Going Forward!");
+    giz_motor.forward();
 }
 
 void loop() {   
@@ -73,12 +54,12 @@ void loop() {
     turn_to_desired_heading();
 
     Serial.print("position:");
-    Serial.print(current_position.x,10);
+    Serial.print(current_position_m.x,10);
     Serial.print(",");
-    Serial.println(current_position.y,10);
+    Serial.println(current_position_m.y,10);
 
     Serial.print("heading:");
-    Serial.println(current_heading);
+    Serial.println(current_heading_r);
 
     //TODO:implement this
     // if(1hz_loop){
@@ -91,7 +72,7 @@ void loop() {
 }
 
 static void update_to_next_waypoint(){
-    if(current_waypoint >= sizeof(WAYPOINTS)/sizeof(WAYPOINTS[0])){
+    if(current_waypoint >= sizeof(WAYPOINTS_M)/sizeof(WAYPOINTS_M[0])){
         giz_motor.stop();
     }else{
         current_waypoint++;
@@ -99,29 +80,55 @@ static void update_to_next_waypoint(){
 }
 
 bool did_hit_waypoint(){
-     if(current_position.distance(WAYPOINTS[current_waypoint]) < 1){
+
+     // GPS can be jittery, and we don't want the car to drive in circles if, say,
+     // we're 1.2 meters away, and the GPS updates to say we're 1.2 meters on the
+     // other side of the waypoint.
+     static double previousDistance_m = 100000;
+     static bool close = false;
+     const double distance_m = current_position_m.distanceTo(WAYPOINTS_M[current_waypoint]);
+
+     //IE: we were close, but now moving away from waypoint
+     if (distance_m < 1 || (close && distance_m > previousDistance_m)) {
+        close = false;
+        previousDistance_m = 100000;
         return true;
      }
+
+     if (distance_m < 2) {
+       close = true;
+     }
+
+     previousDistance_m = distance_m;
      return false;
 }
 
 //update our desired heading w/ current position and next waypoint 
 void update_desired_heading(){
-   desired_heading=current_position.directionTo(WAYPOINTS[current_waypoint]);
-
-    Serial.print("desired heading:");
-    Serial.println(desired_heading);
-
+    desired_heading_r=current_position_m.directionTo_r(WAYPOINTS_M[current_waypoint]);
 }
 
 //PID control to desired heading
 void turn_to_desired_heading(){
-    double headingError=angle_diff(current_heading,desired_heading);
+
+    double headingError_r=angle_diff_r(current_heading_r,desired_heading_r);
+
     double scaleHeadingError=10;//can play w/ this
-    giz_steering.steer((int) (headingError*scaleHeadingError));
+
+    giz_steering.steer((int) (headingError_r*scaleHeadingError));
+
+    // TODO: This logic won't work if our heading is e.g. 1 degree and we want to go to 359 degrees
+    // if (fabs(headingError_r) < 0.1){
+    //   giz_steering.steer(STEER_MID);
+    // } else if (headingError_r < 0) {
+    //   giz_steering.steer(STEER_LEFT);
+    // } else {
+    //   giz_steering.steer(STEER_RIGHT);
+    // }
+
 }
 
-double angle_diff(double x,double y){
+double angle_diff_r(double x,double y){
     return (double) atan2(sin(x-y), cos(x-y));
 }
 
@@ -129,12 +136,12 @@ double angle_diff(double x,double y){
 //combine compass + wheel encoder + gps heading to update position 
 void update_current_position(){
      //kiss for now just use wheel encoder
-     current_position.x=giz_wheel.x_pos;
-     current_position.y=giz_wheel.y_pos;
+     current_position_m.x=giz_wheel.x_pos_m;
+     current_position_m.y=giz_wheel.y_pos_m;
 }
 
 //combine compass + wheel encoder + gps heading to update heading 
 void update_current_heading(){
-     current_heading=giz_wheel.heading;
+     current_heading_r=giz_wheel.heading_r;
 }
 

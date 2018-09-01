@@ -7,15 +7,21 @@
 class GizWheel {
 
 public:
-  double x_pos=0;
-  double y_pos=0;
-  double heading=1.5708;//90 degrees(ie: toward y)
+  double x_pos_m=0;
+  double y_pos_m=0;
+  double heading_r=1.5708;//90 degrees(ie: toward y)
   void update();
   void init();
+  GizWheel();
 
 private:
+
+  double get_left_distance_m();
+  double get_right_distance_m();
+  double peek_left_distance_m() const;
+  double peek_right_distance_m() const;
   static bool _initialized;
-  double bound_angle(double a);
+  double bound_angle_r(double a);
 
 };
 

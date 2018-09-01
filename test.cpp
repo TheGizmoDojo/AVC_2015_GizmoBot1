@@ -8,7 +8,7 @@
 #include <vector>
 using namespace std;
 
-#include "GizmoBot1/point.h"
+#include "gizmobot/point.h"
 
 static void test();
 static void testPoint();

@@ -2,7 +2,7 @@
 
 Servo steering;
 
-void GizSteering::init(){
+GizSteering::GizSteering(){
   steering.attach(STEER_PIN);
 }
 //0=straight, more positive=more right, less positive = more left

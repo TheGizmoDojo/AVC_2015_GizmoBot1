@@ -1,8 +1,21 @@
 #include "giz_gps.h"
 
-TinyGPSPlus gps;
+#include <TinyGPS++.h>
 
-void GizGps::init(){
+static const double STARTING_LAT = 40.0084230000;
+static const double STARTING_LON = -105.0964255000;
+
+GizGps::GizGps() :
+    y_pos_m(0),
+    x_pos_m(0),
+    lat(0),
+    lng(0),
+    heading_r(0),
+    is_updated(false),
+    lat1(STARTING_LAT),
+    lng1(STARTING_LON),
+    gps()
+{
     GPS_SERIAL.begin(GPS_BAUD);
 }
 
@@ -40,14 +53,14 @@ void GizGps::update_x_y_pos(double lat2,double lng2){
 	double x=(cos(phi_1)*sin(phi_2))
 			-(sin(phi_1) * cos(phi_2) * cos(delta_lamda));
 
-	double bearing=atan2(y,x);
+	const double bearing_r=atan2(y,x);
 
-	double xx=d*sin(bearing);
-	double yy=d*cos(bearing);
+	double xx=d*sin(bearing_r);
+	double yy=d*cos(bearing_r);
 
-	x_pos=xx;
-	y_pos=yy;
-	heading=bearing;
+	x_pos_m=xx;
+	y_pos_m=yy;
+	heading_r=bearing_r;
 }
 
 

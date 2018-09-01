@@ -2,7 +2,7 @@
 
 Servo motor;
 
-void GizMotor::init(){
+GizMotor::GizMotor(){
   motor.attach(MOTOR_PIN);
 }
 
