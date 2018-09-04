@@ -6,7 +6,7 @@
 #include "vec2d.h"
 #include "giz_wheel.h"
 
-//#define goPin 53 //Flip switch for go
+#define goPin 53 //Flip switch for go
 
 Vec2d current_position_m;//x,y from lat,lng
 double current_heading_r;
@@ -29,10 +29,32 @@ GizSteering giz_steering;
 GizWheel giz_wheel;
 
 void setup() {
+    pinMode(goPin, INPUT_PULLUP);
     Serial.begin(115200);
     delay(1000);
+    if (digitalRead(goPin)==LOW) {
+      Serial.println("Go switch not ready...");
+      while(digitalRead(goPin)==LOW) {};
+    }
+    delay(500);
+    Serial.println("Waiting for go switch...");
+    while(digitalRead(goPin)==HIGH) {};
     Serial.println("Going Forward!");
     giz_motor.forward();
+
+    //get up to speed before turning because of wheel encoders
+    giz_wheel.clear_left_encoder();
+    giz_wheel.clear_right_encoder();
+    unsigned long driveStraightMillis=millis();
+    unsigned long updateMillis=driveStraightMillis;
+    while (driveStraightMillis-millis()<1000) {
+      if (updateMillis-millis()>=100) {
+        updateMillis+=100;
+        giz_wheel.update();
+        update_current_position(); 
+        update_current_heading();
+      }
+    }
 }
 
 void loop() {   

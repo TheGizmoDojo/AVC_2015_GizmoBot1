@@ -13,7 +13,7 @@ const int RIGHT_WHEEL_PIN = 3;
 const double WHEEL_SEPARATION_M = .175;
 const double WHEEL_DIAMETER = 0.079;
 const double WHEEL_CIRCUMFERENCE =WHEEL_DIAMETER * PI;
-const double TICk_DISTANCE_M = WHEEL_CIRCUMFERENCE/14;
+const double TICk_DISTANCE_M = WHEEL_CIRCUMFERENCE/14.0/18.69*20.0;
 
 
 bool GizWheel::_initialized = false;
@@ -35,6 +35,14 @@ static void right_encoder_isr() {
       right_wheel_ticks++;
       last_right_encoder_update=micros();
   }
+}
+
+void GizWheel::clear_left_encoder() {
+  left_wheel_ticks=0;
+}
+
+void GizWheel::clear_right_encoder() {
+  right_wheel_ticks=0;
 }
 
 GizWheel::GizWheel(){

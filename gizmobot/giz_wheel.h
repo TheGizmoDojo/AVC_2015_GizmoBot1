@@ -13,6 +13,8 @@ public:
   void update();
   void init();
   GizWheel();
+  void clear_left_encoder();
+  void clear_right_encoder();
 
 private:
 
