@@ -30,8 +30,14 @@ GizSteering giz_steering;
 GizWheel giz_wheel;
 
 void setup() {
-    pinMode(goPin, INPUT_PULLUP);
+
     Serial.begin(115200);
+
+    giz_gps.init();//serial not working in constructor
+
+    giz_gps.set_starting_point();
+
+    pinMode(goPin, INPUT_PULLUP);
     delay(1000);
     if (digitalRead(goPin)==LOW) {
       Serial.println("Go switch not ready...");
@@ -44,6 +50,7 @@ void setup() {
     giz_steering.steer(0);
     Serial.println("Going Forward!");
     giz_motor.forward();
+
     
     //testing
 //    delay(5000);
@@ -69,6 +76,7 @@ void setup() {
     //get up to speed before turning because of wheel encoders
     giz_wheel.clear_left_encoder();
     giz_wheel.clear_right_encoder();
+
     unsigned long driveStraightMillis=millis();
     unsigned long updateMillis=driveStraightMillis;
     while (driveStraightMillis-millis()<5000) {
@@ -92,8 +100,7 @@ void loop() {
 
     //get our position && heading
     //giz_compass.update();
-    //giz_gps.update();//we could run this at slower rate 
-
+    giz_gps.update();//we could run this at slower rate 
     giz_wheel.update();
 
     //NOTE:  pry want to combine pos,heading update
@@ -104,18 +111,18 @@ void loop() {
     update_desired_heading();
     turn_to_desired_heading();
 
-    Serial.print("position:");
-    Serial.print(current_position_m.x,10);
-    Serial.print(",");
-    Serial.println(current_position_m.y,10);
-    Serial.print("heading:");
-    Serial.println(current_heading_r);
-    Serial.print("desired heading:");
-    Serial.println(desired_heading_r);
-    Serial.print("wheel right:");
-    Serial.print(giz_wheel.rwt_total);
-    Serial.print(" left: ");
-    Serial.println(giz_wheel.lwt_total);
+  Serial.print("position:");
+  Serial.print(current_position_m.x,10);
+  Serial.print(",");
+  Serial.println(current_position_m.y,10);
+  Serial.print("heading:");
+  Serial.println(current_heading_r);
+  Serial.print("desired heading:");
+  Serial.println(desired_heading_r);
+  Serial.print("wheel right:");
+  Serial.print(giz_wheel.rwt_total);
+  Serial.print(" left: ");
+  Serial.println(giz_wheel.lwt_total);
 
     //TODO:implement this
     // if(1hz_loop){
@@ -192,13 +199,30 @@ double angle_diff_r(double x,double y){
 
 //combine compass + wheel encoder + gps heading to update position 
 void update_current_position(){
+    
+     //how much complimentary correction from gps to apply(higher the more)
+     double gps_correction_amount=0.2;
+
      //kiss for now just use wheel encoder
-     current_position_m.x=giz_wheel.x_pos_m;
-     current_position_m.y=giz_wheel.y_pos_m;
+     current_position_m.x=(giz_wheel.x_pos_m * (1-gps_correction_amount))
+                        + (giz_gps.x_pos_m*gps_correction_amount);
+     current_position_m.y=(giz_wheel.y_pos_m * (1-gps_correction_amount))
+                        + (giz_gps.y_pos_m*gps_correction_amount);
+   
+     //I think we want to pass back corrected position to wheel encoder...
+     giz_wheel.correct_position(current_position_m);
 }
 
 //combine compass + wheel encoder + gps heading to update heading 
 void update_current_heading(){
-     current_heading_r=giz_wheel.heading_r;
-}
 
+     double gps_correction_amount=0.2;
+
+     current_heading_r=giz_wheel.heading_r;
+
+     //not sure if we can rely on gps heading
+    //  current_heading_r=(giz_wheel.heading_r * (1-gps_correction_amount))
+   //                     + (giz_gps.heading_r * gps_correction_amount);
+
+  //   giz_wheel.correct_heading(current_heading_r);
+}

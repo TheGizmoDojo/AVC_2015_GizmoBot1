@@ -16,7 +16,7 @@
 #include <TinyGPS++.h>
 #include "Arduino.h"
 #include <math.h>
-#define GPS_SERIAL Serial1
+#define GPS_SERIAL Serial3
 #define GPS_BAUD 115200
 
 class GizGps{
@@ -30,11 +30,13 @@ public:
 	bool is_updated;
 	double lat1;
 	double lng1;
-  
-public:
-  GizGps();
+    GizGps();
 	void update();
+	void set_starting_point();
+	void init();
 	void update_x_y_pos(double lat2,double lng2);
+
+
 
 private:
   TinyGPSPlus gps;

@@ -1,9 +1,9 @@
 #include "giz_gps.h"
-
 #include <TinyGPS++.h>
 
-static const double STARTING_LAT = 40.0084230000;
-static const double STARTING_LON = -105.0964255000;
+//overrideent if set_staring_point is called
+double STARTING_LAT = 40.0084230000;
+double STARTING_LON = -105.0964255000;
 
 GizGps::GizGps() :
     y_pos_m(0),
@@ -16,10 +16,59 @@ GizGps::GizGps() :
     lng1(STARTING_LON),
     gps()
 {
+    // not working in constructor for some reason
+    //GPS_SERIAL.begin(GPS_BAUD);
+}
+
+
+void GizGps::init(){
     GPS_SERIAL.begin(GPS_BAUD);
 }
 
+
+//currently take average of 5 seconds of reading,
+//not sure if this is best approach
+void GizGps::set_starting_point(){
+    Serial.println("Settings GPS start point");
+    int read_count=0;
+    int loop_count=0;
+    double start_lat=0; 
+    double start_lng=0; 
+
+    
+    while (loop_count < 50){
+        delay(100);
+        while (GPS_SERIAL.available() > 0) {
+          gps.encode(GPS_SERIAL.read());
+        }
+        if (gps.location.isUpdated()){
+           start_lat+=gps.location.lat();
+           start_lng+=gps.location.lng();
+            //lat1=gps.location.lat();
+            //lng1=gps.location.lng();
+
+           read_count+=1;
+        }
+
+        loop_count++;
+    }
+
+    start_lat=start_lat/read_count;
+    start_lng=start_lng/read_count;
+
+    lat1=start_lat;
+    lng1=start_lng;
+
+    Serial.print("gps start lat:");
+    Serial.println(lat1);
+
+    Serial.print("gps start lng:");
+    Serial.println(lng1);
+}
+
 void GizGps::update(){
+
+
   is_updated=false;
   while (GPS_SERIAL.available() > 0) {
       gps.encode(GPS_SERIAL.read());

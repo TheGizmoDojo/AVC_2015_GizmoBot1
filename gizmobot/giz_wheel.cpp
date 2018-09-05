@@ -1,6 +1,4 @@
 #include "giz_wheel.h"
-#include <stdint.h>
-#include <Arduino.h>
 
 //at speed 20=380 ticks/second
 //at 10=170 ticks/second
@@ -96,7 +94,7 @@ void GizWheel::update() {
     double lDist_m=lwt*TICK_DISTANCE_M;
     double rDist_m=rwt*TICK_DISTANCE_M;
 
-    if (fabs(lDist_m - rDist_m) < 1.0e-6){ 
+    if (fabs(lDist_m - rDist_m) < 1.0e-6){
         x_pos_m = x_pos_m + lDist_m * cos(heading_r);
         y_pos_m = y_pos_m + rDist_m * sin(heading_r);
     } else {
@@ -119,6 +117,16 @@ double GizWheel::bound_angle_r(double a) {
   }
   return a;
 }
+
+void GizWheel::correct_position(Vec2d new_pos){
+    x_pos_m=new_pos.x;
+    y_pos_m=new_pos.y;
+}
+
+void GizWheel::correct_heading(double new_heading){
+    heading_r=new_heading;
+}
+
 
 //double GizWheel::get_left_distance_m() {
 //  const int ticks = left_wheel_ticks;

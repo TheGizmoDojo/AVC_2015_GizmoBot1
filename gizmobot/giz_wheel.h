@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "Arduino.h"
 #include <math.h>
+#include "vec2d.h"
 
 class GizWheel {
 
@@ -15,6 +16,8 @@ public:
   GizWheel();
   void clear_left_encoder();
   void clear_right_encoder();
+  void correct_position(Vec2d new_pos);
+  void correct_heading(double new_heading);
   uint16_t get_left_wheel_ticks();
   uint16_t get_right_wheel_ticks();
   uint32_t lwt_total=0;

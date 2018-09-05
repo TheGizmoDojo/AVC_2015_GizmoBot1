@@ -17,4 +17,3 @@ void GizSteering::steer(int v){
   steering.write(i);
 }
 
-
