@@ -32,10 +32,10 @@ GizWheel giz_wheel;
 void setup() {
 
     Serial.begin(115200);
-
+    giz_steering.steer(0);//just to get straight out wheels
     giz_gps.init();//serial not working in constructor
-
     giz_gps.set_starting_point();
+
 
     pinMode(goPin, INPUT_PULLUP);
     delay(1000);
@@ -74,21 +74,21 @@ void setup() {
     //done testing
     
     //get up to speed before turning because of wheel encoders
-    giz_wheel.clear_left_encoder();
-    giz_wheel.clear_right_encoder();
+//////  giz_wheel.clear_left_encoder();
+//////  giz_wheel.clear_right_encoder();
 
-    unsigned long driveStraightMillis=millis();
-    unsigned long updateMillis=driveStraightMillis;
-    while (driveStraightMillis-millis()<5000) {
-      if (updateMillis-millis()>=100) {
-        updateMillis+=100;
-        giz_wheel.update();
-        update_current_position(); 
-        update_current_heading();
-      }
-    }
+//////  unsigned long driveStraightMillis=millis();
+//////  unsigned long updateMillis=driveStraightMillis;
+//////  while (driveStraightMillis-millis()<5000) {
+//////    if (updateMillis-millis()>=100) {
+//////      updateMillis+=100;
+//////      giz_wheel.update();
+//////      update_current_position(); 
+//////      update_current_heading();
+//////    }
+//////  }
 
-    navMillis=millis();
+//////  navMillis=millis();
 }
 
 void loop() {
@@ -201,7 +201,7 @@ double angle_diff_r(double x,double y){
 void update_current_position(){
     
      //how much complimentary correction from gps to apply(higher the more)
-     double gps_correction_amount=0.2;
+     double gps_correction_amount=0.02;
 
      //kiss for now just use wheel encoder
      current_position_m.x=(giz_wheel.x_pos_m * (1-gps_correction_amount))
