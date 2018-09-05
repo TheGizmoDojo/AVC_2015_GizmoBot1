@@ -15,13 +15,17 @@ public:
   GizWheel();
   void clear_left_encoder();
   void clear_right_encoder();
-
+  uint16_t get_left_wheel_ticks();
+  uint16_t get_right_wheel_ticks();
+  uint32_t lwt_total=0;
+  uint32_t rwt_total=0;
+    
 private:
 
-  double get_left_distance_m();
-  double get_right_distance_m();
-  double peek_left_distance_m() const;
-  double peek_right_distance_m() const;
+//  double get_left_distance_m();
+//  double get_right_distance_m();
+//  double peek_left_distance_m() const;
+//  double peek_right_distance_m() const;
   static bool _initialized;
   double bound_angle_r(double a);
 
