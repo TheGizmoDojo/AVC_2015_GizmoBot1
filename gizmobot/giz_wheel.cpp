@@ -14,9 +14,8 @@ const double WHEEL_CIRCUMFERENCE_M = WHEEL_DIAMETER_M * PI;
 const int TICKS_PER_REVOLUTION = 26;
 // These values from observation - being commanded to drive 20m and measuring 18.69m
 const double ADJUSTMENT = 18.69/20.0*19.74/19.44*19.41/19.55;
-const double TICK_DISTANCE_M = WHEEL_CIRCUMFERENCE_M/TICKS_PER_REVOLUTION*ADJUSTMENT;
-// The more ticks we have, the lower the cutoff will be
-const int ISR_CUTOFF_US = 12000 * (14.0 / TICKS_PER_REVOLUTION);
+const double TICK_DISTANCE_M = WHEEL_CIRCUMFERENCE_M/TICKS_PER_REVOLUTION/ADJUSTMENT;
+const int ISR_CUTOFF_US = 12000;
 
 bool GizWheel::_initialized = false;
 static uint16_t left_wheel_ticks=0;
