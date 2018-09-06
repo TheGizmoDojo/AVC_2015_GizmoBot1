@@ -2,15 +2,15 @@
 #define __GIZ_STEARING
 #include <Servo.h>
 
-#define STEER_PIN 11
-//#define STEER_MID 82
-#define STEER_MID 40
-#define STEER_AMOUNT 20
-#define STEER_LEFT STEER_MID-STEER_AMOUNT
-#define STEER_RIGHT STEER_MID+STEER_AMOUNT
-#define MAX_STEER_SWING 15
-#define MAX_STEER_LEFT STEER_MID-MAX_STEER_SWING
-#define MAX_STEER_RIGHT STEER_MID+MAX_STEER_SWING
+const int STEER_PIN = 11;
+const int STEER_MID = 31;
+// From observation, min = 21, max = 49
+const int STEER_AMOUNT = 8;
+const int STEER_LEFT = STEER_MID - STEER_AMOUNT;
+const int STEER_RIGHT = STEER_MID + STEER_AMOUNT;
+const int MAX_STEER_SWING = 10;
+const int MAX_STEER_LEFT = STEER_MID - MAX_STEER_SWING;
+const int MAX_STEER_RIGHT = STEER_MID + MAX_STEER_SWING;
 
 class GizSteering{
   
