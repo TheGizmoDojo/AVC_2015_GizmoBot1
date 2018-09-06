@@ -9,21 +9,25 @@
 const int LEFT_WHEEL_PIN = 2;
 const int RIGHT_WHEEL_PIN = 3;
 const double WHEEL_SEPARATION_M = .175;
-const double WHEEL_DIAMETER = 0.079;
-const double WHEEL_CIRCUMFERENCE =WHEEL_DIAMETER * PI;
-const double TICK_DISTANCE_M = WHEEL_CIRCUMFERENCE/14.0*18.69/20.0*19.74/19.44*19.41/19.55;
-
+const double WHEEL_DIAMETER_M = 0.079;
+const double WHEEL_CIRCUMFERENCE_M = WHEEL_DIAMETER_M * PI;
+const int TICKS_PER_REVOLUTION = 26;
+// These values from observation - being commanded to drive 20m and measuring 18.69m
+const double ADJUSTMENT = 18.69/20.0*19.74/19.44*19.41/19.55;
+const double TICK_DISTANCE_M = WHEEL_CIRCUMFERENCE_M/TICKS_PER_REVOLUTION*ADJUSTMENT;
+// The more ticks we have, the lower the cutoff will be
+const int ISR_CUTOFF_US = 12000 * (14.0 / TICKS_PER_REVOLUTION);
 
 bool GizWheel::_initialized = false;
 static uint16_t left_wheel_ticks=0;
 static uint16_t right_wheel_ticks=0;
 
-double last_left_encoder_update;
-double last_right_encoder_update;
+static long last_left_encoder_update = 0;
+static long last_right_encoder_update = 0;
 
 static void left_encoder_isr() {
-  unsigned long interruptMicros=micros();
-  if(interruptMicros-last_left_encoder_update > 12000) {
+  const long interruptMicros=micros();
+  if(interruptMicros-last_left_encoder_update > ISR_CUTOFF_US) {
     left_wheel_ticks++;
     last_left_encoder_update=interruptMicros; //hmm,  maybe outside if?
   }
@@ -31,8 +35,8 @@ static void left_encoder_isr() {
 }
 
 static void right_encoder_isr() {
-  unsigned long interruptMicros=micros();
-  if(interruptMicros-last_right_encoder_update > 12000) {
+  const unsigned long interruptMicros=micros();
+  if(interruptMicros-last_right_encoder_update > ISR_CUTOFF_US) {
     right_wheel_ticks++;
     last_right_encoder_update=interruptMicros;
   }
