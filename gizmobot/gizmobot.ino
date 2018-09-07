@@ -18,16 +18,12 @@ unsigned long navMillis=0;
 const uint16_t navPeriod=200;
 
 Vec2d WAYPOINTS_M[] = {
-// Vec2d(39.909612, -105.074031),
-// Vec2d(39.909590, -105.074196),
-// Vec2d(39.909575, -105.073983)
- Vec2d(0,2),
- Vec2d(4,4)
-// Vec2d(-20,0),
-// Vec2d(-20,10),
-// Vec2d(-10,10),
-// Vec2d(0,10),
-// Vec2d(0,0)
+ Vec2d(10,0),
+ Vec2d(-20,0),
+ Vec2d(-20,10),
+ Vec2d(-10,10),
+ Vec2d(0,10),
+ Vec2d(0,0)
 };
 
 GizCompass giz_compass;
@@ -38,30 +34,24 @@ GizWheel giz_wheel;
 
 void setup() {
     Serial.begin(115200);
-
     giz_steering.steer(0);//just to get straight out wheels
     giz_gps.init();//serial not working in constructor
     giz_compass.init();
-
-    giz_gps.set_starting_point();
-    //convert_waypoints_to_x_y_grid();
-    //set wheel encoder initial heading
-   // giz_compass.update();
-   // giz_wheel.correct_heading(giz_compass.heading_r);
-
-    pinMode(goPin, INPUT_PULLUP);
-    delay(1000);
-    if (digitalRead(goPin)==LOW) {
-      Serial.println("Go switch not ready...");
-      while(digitalRead(goPin)==LOW) {};
-    }
-    delay(500);
-    giz_steering.steer(0);
-    Serial.println("Waiting for go switch...");
-    while(digitalRead(goPin)==HIGH) {};
-    giz_steering.steer(0);
-    Serial.println("Going Forward!");
-    giz_motor.forward();
+/// giz_gps.set_starting_point();
+/// 
+/// pinMode(goPin, INPUT_PULLUP);
+/// delay(1000);
+/// if (digitalRead(goPin)==LOW) {
+///   Serial.println("Go switch not ready...");
+///   while(digitalRead(goPin)==LOW) {};
+/// }
+/// delay(500);
+/// giz_steering.steer(0);
+/// Serial.println("Waiting for go switch...");
+/// while(digitalRead(goPin)==HIGH) {};
+/// giz_steering.steer(0);
+/// Serial.println("Going Forward!");
+/// giz_motor.forward();
 
     
     //testing
@@ -123,22 +113,22 @@ void loop() {
     update_desired_heading();
     turn_to_desired_heading();
 
-  Serial.print("pos: ");
-  Serial.print(current_position_m.x,3);
-  Serial.print(", ");
-  Serial.print(current_position_m.y,3);
-  Serial.print(" des pos: ");
-  Serial.print(WAYPOINTS_M[current_waypoint].x);
-  Serial.print(", ");
-  Serial.print(WAYPOINTS_M[current_waypoint].y);
-  Serial.print(" hdng: ");
-  Serial.print(current_heading_r, 5);
-  Serial.print(" des hdng: ");
-  Serial.print(desired_heading_r, 5);
-  Serial.print(" whl rght: ");
-  Serial.print(giz_wheel.rwt_total);
-  Serial.print(" lft: ");
-  Serial.println(giz_wheel.lwt_total);
+    Serial.print("pos: ");
+    Serial.print(current_position_m.x,3);
+    Serial.print(", ");
+    Serial.print(current_position_m.y,3);
+    Serial.print(" des pos: ");
+    Serial.print(WAYPOINTS_M[current_waypoint].x);
+    Serial.print(", ");
+    Serial.print(WAYPOINTS_M[current_waypoint].y);
+    Serial.print(" hdng: ");
+    Serial.print(current_heading_r, 5);
+    Serial.print(" des hdng: ");
+    Serial.print(desired_heading_r, 5);
+    Serial.print(" whl rght: ");
+    Serial.print(giz_wheel.rwt_total);
+    Serial.print(" lft: ");
+    Serial.println(giz_wheel.lwt_total);
 
     //TODO:implement this
     // if(1hz_loop){
@@ -200,7 +190,7 @@ void turn_to_desired_heading(){
 
     double scaleHeadingError=30;//can play w/ this
 
-    giz_steering.steer(-(int) (headingError_r*scaleHeadingError));
+    giz_steering.steer((int) (headingError_r*scaleHeadingError));
 
     // TODO: This logic won't work if our heading is e.g. 1 degree and we want to go to 359 degrees
     // if (fabs(headingError_r) < 0.1){
@@ -244,24 +234,7 @@ double angle_average(double angle1, double angle2) {
     return sum * 0.5;
 }
 
-void convert_waypoints_to_x_y_grid(){
-
-    for(int i=0; i < sizeof(WAYPOINTS_M)/sizeof(WAYPOINTS_M[0]);i++){
-
-    double new_x;
-    double new_y;
-    double new_bearing;
-
-    giz_gps.get_x_y_pos_from_lat_lng(WAYPOINTS_M[i].x,WAYPOINTS_M[i].y,&new_x,&new_y,&new_bearing);
-    WAYPOINTS_M[i]=Vec2d(new_x,new_y);
-
- }
-}
-
 //combine compass + wheel encoder + gps heading to update heading 
 void update_current_heading(){
-
-    double compass_correction_amount=0.00;
-    current_heading_r=(giz_wheel.heading_r * (1-compass_correction_amount))
-                        + (giz_compass.heading_r*compass_correction_amount);
+     current_heading_r=giz_wheel.heading_r;
 }

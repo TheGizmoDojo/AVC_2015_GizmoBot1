@@ -5,6 +5,9 @@
 
 
 LSM303 compass;
+int compassMin;
+int compassMax;
+
 GizCompass::GizCompass() {
 
 }
@@ -26,11 +29,16 @@ compass.m_min = (LSM303::vector<int16_t>){-680, -625, -428};
 compass.m_max = (LSM303::vector<int16_t>){360, 433, 470};
 
 
+
+  compassMin = 360;
+  compassMax = 0;
+
   Serial.println(F("Compass initialized!"));
 
 }
 void GizCompass::update(){
     compass.read();
+    //compass.heading((LSM303::vector<int>){0, 1, 0});
     double current_bearing  = compass.heading((LSM303::vector<int>){1,0, 0});//- 92; // Convert from -Y to +X, minus the chassis offset
  // if (current_bearing < 0) {
  //   current_bearing += 360;
@@ -40,7 +48,6 @@ void GizCompass::update(){
     if(current_bearing_r > PI){
         current_bearing_r= -1 * (PI - (current_bearing_r-PI)); 
     }
-    heading_r=current_bearing_r;
 
     //Serial.print("compass heading:");
     //Serial.println(current_bearing_r);

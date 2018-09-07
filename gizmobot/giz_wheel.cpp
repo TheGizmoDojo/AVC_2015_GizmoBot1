@@ -107,8 +107,6 @@ void GizWheel::update() {
 
     double lDist_m=lwt*TICK_DISTANCE_M;
     double rDist_m=rwt*TICK_DISTANCE_M;
-    Serial.println(lDist_m);
-    Serial.println(rDist_m);
 
     if (fabs(lDist_m - rDist_m) < 1.0e-6){
         x_pos_m = x_pos_m + lDist_m * cos(heading_r);
