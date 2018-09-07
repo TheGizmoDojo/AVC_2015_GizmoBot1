@@ -112,9 +112,8 @@ void GizWheel::update() {
         x_pos_m = x_pos_m + lDist_m * cos(heading_r);
         y_pos_m = y_pos_m + rDist_m * sin(heading_r);
     } else {
-        double turningRadius_m = WHEEL_SEPARATION_M * (lDist_m + rDist_m) / (2 * (lDist_m - rDist_m));
-
-        double wd = (lDist_m - rDist_m) / WHEEL_SEPARATION_M;
+        double turningRadius_m = WHEEL_SEPARATION_M * (lDist_m + rDist_m) / (2 * (rDist_m - lDist_m));
+        double wd = (rDist_m - lDist_m) / WHEEL_SEPARATION_M;
 
         x_pos_m = x_pos_m + turningRadius_m * sin(wd + heading_r) - turningRadius_m * sin(heading_r);
         y_pos_m = y_pos_m - turningRadius_m * cos(wd + heading_r) + turningRadius_m * cos(heading_r);

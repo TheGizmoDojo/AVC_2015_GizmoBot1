@@ -10,10 +10,8 @@ class GizWheel {
 public:
   double x_pos_m=0;
   double y_pos_m=0;
-
-  double heading_r=0.2;//north ish
- // double heading_r=1.5708;//90 degrees(ie: toward y)
-//  double heading_r=PI; //pointed West
+//  double heading_r=1.5708;//90 degrees(ie: toward y)
+  double heading_r=PI; //pointed West
   void update();
   void init();
   GizWheel();
