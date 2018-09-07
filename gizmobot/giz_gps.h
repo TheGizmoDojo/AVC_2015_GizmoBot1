@@ -4,6 +4,8 @@
 * as if you are looking at zoomed in google map and:
 * x_pos = E/W E=positive
 * y_pos = N/S N=positive
+//Basically clockwise radians, northern = + southern = -
+* North is 0 radians E= pi/2 South = pi, West = -pi/2
 * 
 * be sure to set starting lat,lng this will be the (0,0) x,y
 *
@@ -35,11 +37,11 @@ public:
 	void set_starting_point();
 	void init();
 	void update_x_y_pos(double lat2,double lng2);
+	void get_x_y_pos_from_lat_lng(double lat2,double lng2,double *x_new,double *y_new, double *heading);
 
 
 
-private:
-  TinyGPSPlus gps;
+private: TinyGPSPlus gps;
   GizGps(const GizGps&) = delete;
   GizGps(GizGps&&) = delete;
   GizGps& operator=(const GizGps&) = delete;

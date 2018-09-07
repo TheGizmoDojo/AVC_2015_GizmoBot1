@@ -18,12 +18,16 @@ unsigned long navMillis=0;
 const uint16_t navPeriod=200;
 
 Vec2d WAYPOINTS_M[] = {
- Vec2d(-10,0),
- Vec2d(-20,0),
- Vec2d(-20,10),
- Vec2d(-10,10),
- Vec2d(0,10),
- Vec2d(0,0)
+// Vec2d(39.909612, -105.074031),
+// Vec2d(39.909590, -105.074196),
+// Vec2d(39.909575, -105.073983)
+ Vec2d(0,2),
+ Vec2d(4,4)
+// Vec2d(-20,0),
+// Vec2d(-20,10),
+// Vec2d(-10,10),
+// Vec2d(0,10),
+// Vec2d(0,0)
 };
 
 GizCompass giz_compass;
@@ -33,12 +37,18 @@ GizSteering giz_steering;
 GizWheel giz_wheel;
 
 void setup() {
-
     Serial.begin(115200);
+
     giz_steering.steer(0);//just to get straight out wheels
     giz_gps.init();//serial not working in constructor
+    giz_compass.init();
+
     giz_gps.set_starting_point();
-    
+    //convert_waypoints_to_x_y_grid();
+    //set wheel encoder initial heading
+   // giz_compass.update();
+   // giz_wheel.correct_heading(giz_compass.heading_r);
+
     pinMode(goPin, INPUT_PULLUP);
     delay(1000);
     if (digitalRead(goPin)==LOW) {
@@ -101,7 +111,7 @@ void loop() {
     last_micros=micros();
 
     //get our position && heading
-    //giz_compass.update();
+    giz_compass.update();
     giz_gps.update();//we could run this at slower rate 
     giz_wheel.update();
 
@@ -190,7 +200,7 @@ void turn_to_desired_heading(){
 
     double scaleHeadingError=30;//can play w/ this
 
-    giz_steering.steer((int) (headingError_r*scaleHeadingError));
+    giz_steering.steer(-(int) (headingError_r*scaleHeadingError));
 
     // TODO: This logic won't work if our heading is e.g. 1 degree and we want to go to 359 degrees
     // if (fabs(headingError_r) < 0.1){
@@ -212,7 +222,7 @@ double angle_diff_r(double x,double y){
 void update_current_position(){
     
      //how much complimentary correction from gps to apply(higher the more)
-     double gps_correction_amount=0.16;
+     double gps_correction_amount=0.00;
 
      //kiss for now just use wheel encoder
      current_position_m.x=(giz_wheel.x_pos_m * (1-gps_correction_amount))
@@ -234,7 +244,24 @@ double angle_average(double angle1, double angle2) {
     return sum * 0.5;
 }
 
+void convert_waypoints_to_x_y_grid(){
+
+    for(int i=0; i < sizeof(WAYPOINTS_M)/sizeof(WAYPOINTS_M[0]);i++){
+
+    double new_x;
+    double new_y;
+    double new_bearing;
+
+    giz_gps.get_x_y_pos_from_lat_lng(WAYPOINTS_M[i].x,WAYPOINTS_M[i].y,&new_x,&new_y,&new_bearing);
+    WAYPOINTS_M[i]=Vec2d(new_x,new_y);
+
+ }
+}
+
 //combine compass + wheel encoder + gps heading to update heading 
 void update_current_heading(){
-     current_heading_r=giz_wheel.heading_r;
+
+    double compass_correction_amount=0.00;
+    current_heading_r=(giz_wheel.heading_r * (1-compass_correction_amount))
+                        + (giz_compass.heading_r*compass_correction_amount);
 }
