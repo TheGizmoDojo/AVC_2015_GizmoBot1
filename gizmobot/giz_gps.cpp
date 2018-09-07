@@ -68,7 +68,6 @@ void GizGps::set_starting_point(){
 
 void GizGps::update(){
 
-
   is_updated=false;
   while (GPS_SERIAL.available() > 0) {
       gps.encode(GPS_SERIAL.read());
@@ -82,7 +81,17 @@ void GizGps::update(){
 }
 
 void GizGps::update_x_y_pos(double lat2,double lng2){
-		
+    double xx;
+    double yy;
+    double bearing_r;
+
+    get_x_y_pos_from_lat_lng(lat2,lng2,&xx,&yy,&bearing_r);
+	x_pos_m=xx;
+	y_pos_m=yy;
+	heading_r=bearing_r;
+}
+
+void GizGps::get_x_y_pos_from_lat_lng(double lat2,double lng2,double *x_new,double *y_new, double *heading){
 	double earth_radius=6371000;
     double phi_1= lat1*(PI / 180.0);
     double phi_2= lat2*(PI / 180.0);
@@ -103,14 +112,11 @@ void GizGps::update_x_y_pos(double lat2,double lng2){
 			-(sin(phi_1) * cos(phi_2) * cos(delta_lamda));
 
 	const double bearing_r=atan2(y,x);
-
 	double xx=d*sin(bearing_r);
 	double yy=d*cos(bearing_r);
-
-	x_pos_m=xx;
-	y_pos_m=yy;
-	heading_r=bearing_r;
+    *x_new=xx;
+    *y_new=yy;
+    *heading=bearing_r;
 }
-
 
 

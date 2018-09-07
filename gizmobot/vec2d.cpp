@@ -35,7 +35,7 @@ double Vec2d::cross(Vec2d &b){
 }
 
 double Vec2d::directionTo_r(Vec2d &b){
-    return atan2(b.y-y,b.x-x);
+    return atan2(b.x-x,b.y-y);
 }
 
 double Vec2d::directionFrom_r(Vec2d &b){
