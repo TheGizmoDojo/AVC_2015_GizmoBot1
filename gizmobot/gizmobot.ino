@@ -188,8 +188,7 @@ void turn_to_desired_heading(){
       Serial.println(headingError_r, 3);
     }
 
-//    double scaleHeadingError=50;//can play w/ this
-    double scaleHeadingError=20;//can play w/ this
+    double scaleHeadingError=30;//can play w/ this
 
     giz_steering.steer((int) (headingError_r*scaleHeadingError));
 
@@ -213,29 +212,29 @@ double angle_diff_r(double x,double y){
 void update_current_position(){
     
      //how much complimentary correction from gps to apply(higher the more)
-//     double gps_correction_amount=0.02;
-     double gps_correction_amount=0.0;
+     double gps_correction_amount=0.16;
 
      //kiss for now just use wheel encoder
      current_position_m.x=(giz_wheel.x_pos_m * (1-gps_correction_amount))
                         + (giz_gps.x_pos_m*gps_correction_amount);
      current_position_m.y=(giz_wheel.y_pos_m * (1-gps_correction_amount))
                         + (giz_gps.y_pos_m*gps_correction_amount);
-   
+
      //I think we want to pass back corrected position to wheel encoder...
      giz_wheel.correct_position(current_position_m);
 }
 
+double angle_average(double angle1, double angle2) {
+    angle1 = fmod(angle1, 2 * PI);
+    angle2 = fmod(angle2, 2 * PI);
+    double sum = angle1 + angle2;
+    if (sum > 2 * PI && sum < 3 * PI) {
+        sum = fmod(sum, PI);
+    }
+    return sum * 0.5;
+}
+
 //combine compass + wheel encoder + gps heading to update heading 
 void update_current_heading(){
-
-     double gps_correction_amount=0.2;
-
      current_heading_r=giz_wheel.heading_r;
-
-     //not sure if we can rely on gps heading
-    //  current_heading_r=(giz_wheel.heading_r * (1-gps_correction_amount))
-   //                     + (giz_gps.heading_r * gps_correction_amount);
-
-  //   giz_wheel.correct_heading(current_heading_r);
 }
