@@ -2,8 +2,8 @@
 #include <TinyGPS++.h>
 
 //overrideent if set_staring_point is called
-double STARTING_LAT = 39.909640;
-double STARTING_LON = -105.074214;
+double STARTING_LAT = 41.831433;
+double STARTING_LON = -104.819557;
 
 GizGps::GizGps() :
     y_pos_m(0),

@@ -2,17 +2,20 @@
 * compass updates at a rate of about 100hz
 *
 */
-#ifndef __GIZ_COMPASS__
-#define __GIZ_COMPASS__
+#ifndef __GIZ_GRYO_
+#define __GIZ_GRYO_
 #include "Arduino.h"
+#define GRYO_SERIAL Serial2
+#define GRYO_BAUD 57600
 
-class GizCompass{
+class GizGyro{
 
 public:
-  GizCompass();
+  GizGyro();
   float heading_r;
+  
+public:
   void update();
-  void init();
 };
 
 

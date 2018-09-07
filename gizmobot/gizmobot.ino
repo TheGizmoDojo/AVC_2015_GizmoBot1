@@ -18,7 +18,7 @@ unsigned long navMillis=0;
 const uint16_t navPeriod=200;
 
 Vec2d WAYPOINTS_M[] = {
- Vec2d(-10,0),
+ Vec2d(10,0),
  Vec2d(-20,0),
  Vec2d(-20,10),
  Vec2d(-10,10),
@@ -33,25 +33,25 @@ GizSteering giz_steering;
 GizWheel giz_wheel;
 
 void setup() {
-
     Serial.begin(115200);
     giz_steering.steer(0);//just to get straight out wheels
     giz_gps.init();//serial not working in constructor
-    giz_gps.set_starting_point();
-    
-    pinMode(goPin, INPUT_PULLUP);
-    delay(1000);
-    if (digitalRead(goPin)==LOW) {
-      Serial.println("Go switch not ready...");
-      while(digitalRead(goPin)==LOW) {};
-    }
-    delay(500);
-    giz_steering.steer(0);
-    Serial.println("Waiting for go switch...");
-    while(digitalRead(goPin)==HIGH) {};
-    giz_steering.steer(0);
-    Serial.println("Going Forward!");
-    giz_motor.forward();
+    giz_compass.init();
+/// giz_gps.set_starting_point();
+/// 
+/// pinMode(goPin, INPUT_PULLUP);
+/// delay(1000);
+/// if (digitalRead(goPin)==LOW) {
+///   Serial.println("Go switch not ready...");
+///   while(digitalRead(goPin)==LOW) {};
+/// }
+/// delay(500);
+/// giz_steering.steer(0);
+/// Serial.println("Waiting for go switch...");
+/// while(digitalRead(goPin)==HIGH) {};
+/// giz_steering.steer(0);
+/// Serial.println("Going Forward!");
+/// giz_motor.forward();
 
     
     //testing
@@ -101,7 +101,7 @@ void loop() {
     last_micros=micros();
 
     //get our position && heading
-    //giz_compass.update();
+    giz_compass.update();
     giz_gps.update();//we could run this at slower rate 
     giz_wheel.update();
 
@@ -113,22 +113,22 @@ void loop() {
     update_desired_heading();
     turn_to_desired_heading();
 
-  Serial.print("pos: ");
-  Serial.print(current_position_m.x,3);
-  Serial.print(", ");
-  Serial.print(current_position_m.y,3);
-  Serial.print(" des pos: ");
-  Serial.print(WAYPOINTS_M[current_waypoint].x);
-  Serial.print(", ");
-  Serial.print(WAYPOINTS_M[current_waypoint].y);
-  Serial.print(" hdng: ");
-  Serial.print(current_heading_r, 5);
-  Serial.print(" des hdng: ");
-  Serial.print(desired_heading_r, 5);
-  Serial.print(" whl rght: ");
-  Serial.print(giz_wheel.rwt_total);
-  Serial.print(" lft: ");
-  Serial.println(giz_wheel.lwt_total);
+    Serial.print("pos: ");
+    Serial.print(current_position_m.x,3);
+    Serial.print(", ");
+    Serial.print(current_position_m.y,3);
+    Serial.print(" des pos: ");
+    Serial.print(WAYPOINTS_M[current_waypoint].x);
+    Serial.print(", ");
+    Serial.print(WAYPOINTS_M[current_waypoint].y);
+    Serial.print(" hdng: ");
+    Serial.print(current_heading_r, 5);
+    Serial.print(" des hdng: ");
+    Serial.print(desired_heading_r, 5);
+    Serial.print(" whl rght: ");
+    Serial.print(giz_wheel.rwt_total);
+    Serial.print(" lft: ");
+    Serial.println(giz_wheel.lwt_total);
 
     //TODO:implement this
     // if(1hz_loop){
@@ -212,7 +212,7 @@ double angle_diff_r(double x,double y){
 void update_current_position(){
     
      //how much complimentary correction from gps to apply(higher the more)
-     double gps_correction_amount=0.16;
+     double gps_correction_amount=0.00;
 
      //kiss for now just use wheel encoder
      current_position_m.x=(giz_wheel.x_pos_m * (1-gps_correction_amount))
