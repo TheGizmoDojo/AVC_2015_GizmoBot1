@@ -15,7 +15,10 @@ const int TICKS_PER_REVOLUTION = 26;
 // These values from observation - being commanded to drive 20m and measuring 18.69m
 const double ADJUSTMENT = 18.69/20.0*19.74/19.44*19.41/19.55;
 const double TICK_DISTANCE_M = WHEEL_CIRCUMFERENCE_M/TICKS_PER_REVOLUTION/ADJUSTMENT;
-const int ISR_CUTOFF_US = 12000;
+//const int ISR_CUTOFF_US = 12000;
+const int ISR_CUTOFF_US = 1850;
+bool pin_8_state=LOW; //testing (TP17)
+bool pin_9_state=LOW; //testing (TP18)
 
 bool GizWheel::_initialized = false;
 static uint16_t left_wheel_ticks=0;
@@ -34,8 +37,12 @@ static void left_encoder_isr() {
 }
 
 static void right_encoder_isr() {
+  digitalWrite(8, pin_8_state);
+  pin_8_state ^= 1; //toggle
   const unsigned long interruptMicros=micros();
   if(interruptMicros-last_right_encoder_update > ISR_CUTOFF_US) {
+    digitalWrite(9, pin_9_state);
+    pin_9_state ^= 1; //toggle
     right_wheel_ticks++;
     last_right_encoder_update=interruptMicros;
   }
@@ -63,6 +70,10 @@ GizWheel::GizWheel(){
     _initialized = true;
     attachInterrupt(digitalPinToInterrupt(LEFT_WHEEL_PIN), left_encoder_isr, CHANGE);
     attachInterrupt(digitalPinToInterrupt(RIGHT_WHEEL_PIN), right_encoder_isr, CHANGE);
+    pinMode(8, OUTPUT);
+    digitalWrite(8, LOW);
+    pinMode(9, OUTPUT);
+    digitalWrite(9, LOW);
   }
 }
 

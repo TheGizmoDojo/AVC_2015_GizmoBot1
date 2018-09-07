@@ -14,13 +14,16 @@ double desired_heading_r;
 double dt,last_micros;
 int current_waypoint = 0;
 unsigned long navMillis=0;
-const uint16_t navPeriod=100;
+//const uint16_t navPeriod=100;
+const uint16_t navPeriod=200;
 
 Vec2d WAYPOINTS_M[] = {
- Vec2d(0,20),
- Vec2d(10,20),
- Vec2d(10,0),
- Vec2d(0,0) 
+ Vec2d(-10,0),
+ Vec2d(-20,0),
+ Vec2d(-20,10),
+ Vec2d(-10,10),
+ Vec2d(0,10),
+ Vec2d(0,0)
 };
 
 GizCompass giz_compass;
@@ -35,8 +38,7 @@ void setup() {
     giz_steering.steer(0);//just to get straight out wheels
     giz_gps.init();//serial not working in constructor
     giz_gps.set_starting_point();
-
-
+    
     pinMode(goPin, INPUT_PULLUP);
     delay(1000);
     if (digitalRead(goPin)==LOW) {
@@ -111,17 +113,21 @@ void loop() {
     update_desired_heading();
     turn_to_desired_heading();
 
-  Serial.print("position:");
-  Serial.print(current_position_m.x,10);
-  Serial.print(",");
-  Serial.println(current_position_m.y,10);
-  Serial.print("heading:");
-  Serial.println(current_heading_r);
-  Serial.print("desired heading:");
-  Serial.println(desired_heading_r);
-  Serial.print("wheel right:");
+  Serial.print("pos: ");
+  Serial.print(current_position_m.x,3);
+  Serial.print(", ");
+  Serial.print(current_position_m.y,3);
+  Serial.print(" des pos: ");
+  Serial.print(WAYPOINTS_M[current_waypoint].x);
+  Serial.print(", ");
+  Serial.print(WAYPOINTS_M[current_waypoint].y);
+  Serial.print(" hdng: ");
+  Serial.print(current_heading_r, 5);
+  Serial.print(" des hdng: ");
+  Serial.print(desired_heading_r, 5);
+  Serial.print(" whl rght: ");
   Serial.print(giz_wheel.rwt_total);
-  Serial.print(" left: ");
+  Serial.print(" lft: ");
   Serial.println(giz_wheel.lwt_total);
 
     //TODO:implement this
@@ -177,7 +183,13 @@ void turn_to_desired_heading(){
 
     double headingError_r=angle_diff_r(current_heading_r,desired_heading_r);
 
-    double scaleHeadingError=50;//can play w/ this
+    if (fabs(headingError_r)>PI/16.0) {
+      Serial.print("TURN!: ");
+      Serial.println(headingError_r, 3);
+    }
+
+//    double scaleHeadingError=50;//can play w/ this
+    double scaleHeadingError=20;//can play w/ this
 
     giz_steering.steer((int) (headingError_r*scaleHeadingError));
 
@@ -201,7 +213,8 @@ double angle_diff_r(double x,double y){
 void update_current_position(){
     
      //how much complimentary correction from gps to apply(higher the more)
-     double gps_correction_amount=0.02;
+//     double gps_correction_amount=0.02;
+     double gps_correction_amount=0.0;
 
      //kiss for now just use wheel encoder
      current_position_m.x=(giz_wheel.x_pos_m * (1-gps_correction_amount))
