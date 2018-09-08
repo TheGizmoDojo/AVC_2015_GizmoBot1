@@ -1,3 +1,7 @@
+#include <Wire.h>
+#include <SparkFun_VL53L1X_Arduino_Library.h>
+#include <vl53l1_register_map.h>
+
 #include "gizmobot.h"
 #include "giz_gps.h"
 #include "giz_compass.h"
@@ -7,6 +11,9 @@
 #include "giz_wheel.h"
 
 #define goPin 53 //Flip switch for go
+#define distanceSensorPinL 22
+#define distanceSensorPinC 42
+#define distanceSensorPinR 26
 
 Vec2d current_position_m;//x,y from lat,lng
 double current_heading_r;
@@ -14,8 +21,13 @@ double desired_heading_r;
 double dt,last_micros;
 int current_waypoint = 0;
 unsigned long navMillis=0;
-//const uint16_t navPeriod=100;
+unsigned long distanceSensorMillis=0;
 const uint16_t navPeriod=200;
+const uint16_t distanceSensorPeriod=50;
+uint8_t distanceSensorIndex=0;
+int distanceLeft=0;
+int distanceCenter=0;
+int distanceRight=0;
 
 Vec2d WAYPOINTS_M[] = {
  Vec2d(-10,0),
@@ -31,6 +43,9 @@ GizGps giz_gps;
 GizMotor giz_motor;
 GizSteering giz_steering;
 GizWheel giz_wheel;
+VL53L1X distanceSensorLeft;
+VL53L1X distanceSensorCenter;
+VL53L1X distanceSensorRight;
 
 void setup() {
 
@@ -38,7 +53,21 @@ void setup() {
     giz_steering.steer(0);//just to get straight out wheels
     giz_gps.init();//serial not working in constructor
     giz_gps.set_starting_point();
-    
+
+    //distance sensor
+    Wire.begin();
+    digitalWrite(distanceSensorPinL, LOW);
+    pinMode(distanceSensorPinL, OUTPUT);
+    digitalWrite(distanceSensorPinC, LOW);
+    pinMode(distanceSensorPinC, OUTPUT);
+    digitalWrite(distanceSensorPinR, LOW);
+    pinMode(distanceSensorPinR, OUTPUT);
+    digitalWrite(distanceSensorPinL, HIGH);
+    delay(1);
+    if (distanceSensorLeft.begin()==false) {
+      Serial.println("SensorLeft offline!");
+    }
+
     pinMode(goPin, INPUT_PULLUP);
     delay(1000);
     if (digitalRead(goPin)==LOW) {
@@ -90,13 +119,13 @@ void setup() {
 //////    }
 //////  }
 
-//////  navMillis=millis();
+  navMillis=millis();
+  distanceSensorMillis=millis();
 }
 
 void loop() {
   if (navMillis-millis()>=navPeriod) {
     navMillis+=navPeriod;
-//    delay(100);
     dt=micros()-last_micros;
     last_micros=micros();
 
@@ -128,7 +157,14 @@ void loop() {
   Serial.print(" whl rght: ");
   Serial.print(giz_wheel.rwt_total);
   Serial.print(" lft: ");
-  Serial.println(giz_wheel.lwt_total);
+  Serial.print(giz_wheel.lwt_total);
+  Serial.print(" dist_l: ");
+  Serial.print(distanceLeft);
+  Serial.print(" dist_c: ");
+  Serial.print(distanceCenter);
+  Serial.print(" dist_r: ");
+  Serial.print(distanceRight);
+  Serial.println();
 
     //TODO:implement this
     // if(1hz_loop){
@@ -136,6 +172,51 @@ void loop() {
         update_to_next_waypoint();
     }
   }
+
+  if (distanceSensorMillis-millis()>=distanceSensorPeriod) {
+    distanceSensorMillis+=distanceSensorPeriod;
+    switch (distanceSensorIndex) {
+      case 0:
+        if (distanceSensorLeft.newDataReady()==true) {
+          distanceSensorIndex=1;
+          distanceLeft=distanceSensorLeft.getDistance();
+          digitalWrite(distanceSensorPinL, LOW);
+          digitalWrite(distanceSensorPinC, HIGH);
+          delay(3);
+          if (distanceSensorCenter.begin()==false) {
+            Serial.println("SensorCenter offline!");
+          }
+        }
+      break;
+      case 1:
+        if (distanceSensorCenter.newDataReady()==true) {
+          distanceSensorIndex=2;
+          distanceCenter=distanceSensorCenter.getDistance();
+          digitalWrite(distanceSensorPinC, LOW);
+          digitalWrite(distanceSensorPinR, HIGH);
+          delay(3);
+          if (distanceSensorRight.begin()==false) {
+            Serial.println("SensorRight offline!");
+          }
+        }
+      break;
+      case 2:
+        if (distanceSensorRight.newDataReady()==true) {
+          distanceSensorIndex=0;
+          distanceRight=distanceSensorRight.getDistance();
+          digitalWrite(distanceSensorPinR, LOW);
+          digitalWrite(distanceSensorPinL, HIGH);
+          delay(3);
+          if (distanceSensorLeft.begin()==false) {
+            Serial.println("SensorLeft offline!");
+          }
+        }
+      break;
+      default:
+        Serial.print("Shouldn't be here, something bad happened. distanceSensorIndex=");
+        Serial.println(distanceSensorIndex);
+    }
+  }  
 }
 
 static void update_to_next_waypoint(){
