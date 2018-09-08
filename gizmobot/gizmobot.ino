@@ -212,7 +212,8 @@ double angle_diff_r(double x,double y){
 void update_current_position(){
     
      //how much complimentary correction from gps to apply(higher the more)
-     double gps_correction_amount=0.16;
+//     double gps_correction_amount=16.0;
+     double gps_correction_amount=0.0;
 
      //kiss for now just use wheel encoder
      current_position_m.x=(giz_wheel.x_pos_m * (1-gps_correction_amount))

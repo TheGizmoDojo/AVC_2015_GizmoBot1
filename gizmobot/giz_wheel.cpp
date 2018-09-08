@@ -16,9 +16,10 @@ const int TICKS_PER_REVOLUTION = 26;
 const double ADJUSTMENT = 18.69/20.0*19.74/19.44*19.41/19.55;
 const double TICK_DISTANCE_M = WHEEL_CIRCUMFERENCE_M/TICKS_PER_REVOLUTION/ADJUSTMENT;
 //const int ISR_CUTOFF_US = 12000;
-const int ISR_CUTOFF_US = 1850;
+const int ISR_CUTOFF_US = 1850; //for speed 9
 bool pin_8_state=LOW; //testing (TP17)
 bool pin_9_state=LOW; //testing (TP18)
+const double DRIFT_CORRECTION_FACTOR = 1.0025;
 
 bool GizWheel::_initialized = false;
 static uint16_t left_wheel_ticks=0;
@@ -105,7 +106,7 @@ void GizWheel::update() {
     rwt_total+=rwt;
 //    rwt_total+=rwt/8567.0*10006.0;
 
-    double lDist_m=lwt*TICK_DISTANCE_M;
+    double lDist_m=lwt*TICK_DISTANCE_M*DRIFT_CORRECTION_FACTOR;
     double rDist_m=rwt*TICK_DISTANCE_M;
 
     if (fabs(lDist_m - rDist_m) < 1.0e-6){
