@@ -112,5 +112,33 @@ void GizGps::update_x_y_pos(double lat2,double lng2){
 	heading_r=bearing_r;
 }
 
+void GizGps::get_x_y_pos_from_lat_lng(double lat2,double lng2,double *x_new,double *y_new, double *heading){
+  double earth_radius=6371000;
+    double phi_1= lat1*(PI / 180.0);
+    double phi_2= lat2*(PI / 180.0);
+  double delta_phi= (lat2-lat1)*(PI/180.0);
+  double delta_lamda=(lng2-lng1)*(PI/180.0);
+
+  double a = sin(delta_phi/2) * sin(delta_phi/2) +
+        cos(phi_1) * cos(phi_2) *
+        sin(delta_lamda/2) * sin(delta_lamda/2);
+
+  double c = 2 * atan2(sqrt(a), sqrt(1));
+
+  //distance 
+  double d=earth_radius * c;
+  double y=sin(delta_lamda)*cos(phi_2);
+
+  double x=(cos(phi_1)*sin(phi_2))
+      -(sin(phi_1) * cos(phi_2) * cos(delta_lamda));
+
+  const double bearing_r=atan2(y,x);
+  double xx=d*sin(bearing_r);
+  double yy=d*cos(bearing_r);
+    *x_new=xx;
+    *y_new=yy;
+    *heading=bearing_r;
+}
+
 
 

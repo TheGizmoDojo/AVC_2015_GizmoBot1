@@ -30,11 +30,12 @@ public:
 	bool is_updated;
 	double lat1;
 	double lng1;
-    GizGps();
+  GizGps();
 	void update();
 	void set_starting_point();
 	void init();
 	void update_x_y_pos(double lat2,double lng2);
+  void get_x_y_pos_from_lat_lng(double lat2,double lng2,double *x_new,double *y_new, double *heading);
 
 
 

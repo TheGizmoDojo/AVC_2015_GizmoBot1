@@ -54,6 +54,10 @@ void setup() {
     giz_gps.init();//serial not working in constructor
     giz_gps.set_starting_point();
 
+    // TODO: Add xy conv
+    //convert_waypoints_to_x_y_grid();
+    
+
     //distance sensor
     Wire.begin();
     digitalWrite(distanceSensorPinL, LOW);
@@ -217,6 +221,20 @@ void loop() {
         Serial.println(distanceSensorIndex);
     }
   }  
+}
+
+void convert_waypoints_to_x_y_grid(){
+
+    for(int i=0; i < sizeof(WAYPOINTS_M)/sizeof(WAYPOINTS_M[0]);i++){
+
+    double new_x;
+    double new_y;
+    double new_bearing;
+
+    giz_gps.get_x_y_pos_from_lat_lng(WAYPOINTS_M[i].x,WAYPOINTS_M[i].y,&new_x,&new_y,&new_bearing);
+    WAYPOINTS_M[i]=Vec2d(new_x,new_y);
+
+ }
 }
 
 static void update_to_next_waypoint(){
